@@ -96,9 +96,7 @@ export default function Home() {
           <img
             src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
             alt="miffy"
-            width={70}
-            height={87}
-            className="drop-shadow-lg pointer-events-none miffy-wobble"
+            className="drop-shadow-lg pointer-events-none miffy-wobble w-[70px] h-[87px] min-w-[70px]"
             draggable={false}
           />
         </div>
@@ -154,9 +152,7 @@ export default function Home() {
             <img
               src={miffyTongue ? "/miffy-tongue.png" : "/miffy2.png"}
               alt="miffy"
-              width={70}
-              height={87}
-              className="miffy-bounce miffy-wobble drop-shadow-lg pointer-events-none"
+              className="miffy-bounce miffy-wobble drop-shadow-lg pointer-events-none w-[70px] h-[87px] min-w-[70px]"
               draggable={false}
             />
           </div>
