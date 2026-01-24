@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, TwitterIcon, Bookmark01Icon, YelpIcon, Linkedin01Icon } from "@hugeicons/core-free-icons";
@@ -11,6 +11,17 @@ export default function Home() {
   const [miffyPos, setMiffyPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [miffyTongue, setMiffyTongue] = useState(false);
+  const [runFrame, setRunFrame] = useState(0);
+
+  useEffect(() => {
+    if (isDragging) {
+      const interval = setInterval(() => {
+        setRunFrame((prev) => (prev === 0 ? 1 : 0));
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [isDragging]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
@@ -33,18 +44,55 @@ export default function Home() {
     setIsDragging(false);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    const touch = e.touches[0];
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    setMiffyPos({
+      x: touch.clientX - dragOffset.x,
+      y: touch.clientY - dragOffset.y,
+    });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  const handleDoubleClick = () => {
+    setMiffyTongue(true);
+    setTimeout(() => setMiffyTongue(false), 1000);
+  };
+
   return (
     <>
       <div
-        className={`${miffyPos.x === 0 && miffyPos.y === 0 ? 'miffy-bounce fixed right-4 bottom-8 md:right-8 lg:right-16' : 'fixed'} z-50 cursor-grab active:cursor-grabbing`}
-        style={miffyPos.x !== 0 || miffyPos.y !== 0 ? { left: miffyPos.x, top: miffyPos.y } : undefined}
-        onMouseDown={handleMouseDown}
+        className={`${miffyPos.x === 0 && miffyPos.y === 0 ? 'miffy-bounce fixed right-4 bottom-8 md:right-8 lg:right-16' : 'fixed'} z-50 cursor-grab active:cursor-grabbing select-none`}
+        style={{ 
+          ...(miffyPos.x !== 0 || miffyPos.y !== 0 ? { left: miffyPos.x, top: miffyPos.y } : {}),
+          WebkitTapHighlightColor: 'transparent',
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+        }}
+                onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onDoubleClick={handleDoubleClick}
       >
         <img
-          src="/miffy2.png"
+          src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
           alt="miffy"
           width={80}
           height={100}
