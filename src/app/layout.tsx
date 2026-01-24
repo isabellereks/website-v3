@@ -16,9 +16,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Isabelle Reksopuro",
   description: "Personal website of Isabelle Reksopuro",
-  icons: {
-    icon: "/headshot.jpeg",
-  },
 };
 
 export default function RootLayout({
