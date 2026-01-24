@@ -96,23 +96,25 @@ export default function Home() {
           <img
             src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
             alt="miffy"
-            className="drop-shadow-lg pointer-events-none miffy-wobble w-[70px] h-[87px] min-w-[70px]"
+            width={70}
+            height={70}
+            className="drop-shadow-lg pointer-events-none miffy-wobble shrink-0"
             draggable={false}
           />
         </div>
       )}
       <main className="max-w-xl mx-auto px-6 py-16 font-[family-name:var(--font-geist-mono)] text-neutral-800">
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-6 relative">
         <Image
           src="/headshot.jpeg"
           alt="isabelle headshot"
           width={60}
           height={60}
-          className="rounded-full"
+          className="rounded-full shrink-0"
         />
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold font-[family-name:var(--font-geist-mono)]">
-            <span className="shimmer">Isabelle Reksopuro</span>
+            <span className="shimmer">Isabelle<br className="md:hidden" /> Reksopuro</span>
           </h1>
           <div className="flex gap-4">
             <a href="mailto:reksopuro.isabelle@gmail.com" className="text-[#3a5b39] hover:text-[#2d472d] transition-colors" title="email">
@@ -134,7 +136,7 @@ export default function Home() {
         </div>
         {miffyPos.x === 0 && miffyPos.y === 0 && (
           <div
-            className="cursor-grab active:cursor-grabbing select-none self-start"
+            className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none"
             style={{ 
               WebkitTapHighlightColor: 'transparent',
               WebkitTouchCallout: 'none',
@@ -152,7 +154,9 @@ export default function Home() {
             <img
               src={miffyTongue ? "/miffy-tongue.png" : "/miffy2.png"}
               alt="miffy"
-              className="miffy-bounce miffy-wobble drop-shadow-lg pointer-events-none w-[70px] h-[87px] min-w-[70px]"
+              width={70}
+              height={70}
+              className="miffy-bounce drop-shadow-lg pointer-events-none"
               draggable={false}
             />
           </div>
