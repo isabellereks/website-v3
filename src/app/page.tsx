@@ -8,9 +8,51 @@ import { Mail01Icon, TwitterIcon, Bookmark01Icon, YelpIcon, Linkedin01Icon } fro
 export default function Home() {
   const [showPast, setShowPast] = useState(false);
   const [showMisc, setShowMisc] = useState(false);
+  const [miffyPos, setMiffyPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setMiffyPos({
+      x: e.clientX - dragOffset.x,
+      y: e.clientY - dragOffset.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
 
   return (
-    <main className="max-w-xl mx-auto px-6 py-16 font-[family-name:var(--font-geist-mono)] text-neutral-800">
+    <>
+      <div
+        className={`${miffyPos.x === 0 && miffyPos.y === 0 ? 'miffy-bounce fixed right-4 bottom-8 md:right-8 lg:right-16' : 'fixed'} z-50 cursor-grab active:cursor-grabbing`}
+        style={miffyPos.x !== 0 || miffyPos.y !== 0 ? { left: miffyPos.x, top: miffyPos.y } : undefined}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <img
+          src="/miffy2.png"
+          alt="miffy"
+          width={80}
+          height={100}
+          className="drop-shadow-lg pointer-events-none miffy-wobble"
+          draggable={false}
+        />
+      </div>
+      <main className="max-w-xl mx-auto px-6 py-16 font-[family-name:var(--font-geist-mono)] text-neutral-800">
       <div className="flex items-center gap-4 mb-6">
         <Image
           src="/headshot.jpeg"
@@ -257,5 +299,6 @@ export default function Home() {
         </p>
       </div>
     </main>
+    </>
   );
 }
