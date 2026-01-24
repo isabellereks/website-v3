@@ -74,32 +74,35 @@ export default function Home() {
 
   return (
     <>
-      <div
-        className={`${miffyPos.x === 0 && miffyPos.y === 0 ? 'miffy-bounce fixed right-4 bottom-8 md:right-8 lg:right-16' : 'fixed'} z-50 cursor-grab active:cursor-grabbing select-none`}
-        style={{ 
-          ...(miffyPos.x !== 0 || miffyPos.y !== 0 ? { left: miffyPos.x, top: miffyPos.y } : {}),
-          WebkitTapHighlightColor: 'transparent',
-          WebkitTouchCallout: 'none',
-          WebkitUserSelect: 'none',
-        }}
-                onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onDoubleClick={handleDoubleClick}
-      >
-        <img
-          src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
-          alt="miffy"
-          width={80}
-          height={100}
-          className="drop-shadow-lg pointer-events-none miffy-wobble"
-          draggable={false}
-        />
-      </div>
+      {(miffyPos.x !== 0 || miffyPos.y !== 0) && (
+        <div
+          className="fixed z-50 cursor-grab active:cursor-grabbing select-none"
+          style={{ 
+            left: miffyPos.x,
+            top: miffyPos.y,
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none',
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onDoubleClick={handleDoubleClick}
+        >
+          <img
+            src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
+            alt="miffy"
+            width={70}
+            height={87}
+            className="drop-shadow-lg pointer-events-none miffy-wobble"
+            draggable={false}
+          />
+        </div>
+      )}
       <main className="max-w-xl mx-auto px-6 py-16 font-[family-name:var(--font-geist-mono)] text-neutral-800">
       <div className="flex items-center gap-4 mb-6">
         <Image
@@ -131,6 +134,33 @@ export default function Home() {
             </a>
           </div>
         </div>
+        {miffyPos.x === 0 && miffyPos.y === 0 && (
+          <div
+            className="cursor-grab active:cursor-grabbing select-none self-start"
+            style={{ 
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none',
+            }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onDoubleClick={handleDoubleClick}
+          >
+            <img
+              src={miffyTongue ? "/miffy-tongue.png" : "/miffy2.png"}
+              alt="miffy"
+              width={70}
+              height={87}
+              className="miffy-bounce miffy-wobble drop-shadow-lg pointer-events-none"
+              draggable={false}
+            />
+          </div>
+        )}
       </div>
 
       <div className="space-y-4 text-sm leading-relaxed font-serif">
