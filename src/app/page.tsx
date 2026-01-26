@@ -41,6 +41,15 @@ export default function Home() {
     const triggerBounce = (dir: 'left' | 'right' | 'top' | 'bottom') => {
       setIsBouncing(dir);
       setMiffyTongue(true);
+      const bounceBack = shiftHeld ? 30 : 15;
+      setMiffyPos((prev) => {
+        let { x, y } = prev;
+        if (dir === 'left') x += bounceBack;
+        if (dir === 'right') x -= bounceBack;
+        if (dir === 'top') y += bounceBack;
+        if (dir === 'bottom') y -= bounceBack;
+        return { x, y };
+      });
       clearTimeout(bounceTimeout);
       bounceTimeout = setTimeout(() => {
         setIsBouncing(null);
