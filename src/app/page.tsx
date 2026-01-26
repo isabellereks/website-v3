@@ -243,7 +243,7 @@ export default function Home() {
     <>
       {miffyActivated && (
         <div
-          className="fixed z-50 cursor-grab active:cursor-grabbing select-none touch-none"
+          className="fixed z-50 cursor-grab active:cursor-grabbing select-none touch-none group"
           style={{ 
             transform: `translate3d(${miffyPos.x}px, ${miffyPos.y}px, 0)`,
             willChange: 'transform',
@@ -252,6 +252,11 @@ export default function Home() {
           onTouchStart={handleTouchStart}
           onDoubleClick={handleDoubleClick}
         >
+          {!isDragging && !isMoving && (
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#AD606E] text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap font-[family-name:var(--font-geist-mono)]">
+              isa's miffy
+            </span>
+          )}
           <img
             src={miffyTongue ? "/miffy-tongue.png" : (isDragging || isMoving) ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
             alt="miffy"
@@ -296,11 +301,14 @@ export default function Home() {
         {!miffyActivated && (
           <div
             ref={initialMiffyRef}
-            className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none touch-none"
+            className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none touch-none group"
             onMouseDown={handleMouseDown}
             onTouchStart={handleTouchStart}
             onDoubleClick={handleDoubleClick}
           >
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#AD606E] text-white text-[8px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap font-[family-name:var(--font-geist-mono)]">
+              isa's miffy
+            </span>
             <img
               src={miffyTongue ? "/miffy-tongue.png" : "/miffy2.png"}
               alt="miffy"
