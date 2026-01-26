@@ -18,6 +18,7 @@ export default function Home() {
   const [isBouncing, setIsBouncing] = useState<'left' | 'right' | 'top' | 'bottom' | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const initialMiffyRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isDragging && !isMoving) return;
@@ -37,10 +38,9 @@ export default function Home() {
     let bounceTimeout: NodeJS.Timeout;
     let shiftHeld = false;
     let lastSpaceTime = 0;
+    let currentBounceDir: string | null = null;
 
     const triggerBounce = (dir: 'left' | 'right' | 'top' | 'bottom') => {
-      setIsBouncing(dir);
-      setMiffyTongue(true);
       const bounceBack = shiftHeld ? 30 : 15;
       setMiffyPos((prev) => {
         let { x, y } = prev;
@@ -50,11 +50,19 @@ export default function Home() {
         if (dir === 'bottom') y -= bounceBack;
         return { x, y };
       });
+      
+      if (currentBounceDir !== dir) {
+        currentBounceDir = dir;
+        setIsBouncing(dir);
+      }
+      setMiffyTongue(true);
+      
       clearTimeout(bounceTimeout);
       bounceTimeout = setTimeout(() => {
         setIsBouncing(null);
         setMiffyTongue(false);
-      }, 400);
+        currentBounceDir = null;
+      }, 200);
     };
 
     const tick = () => {
@@ -213,6 +221,24 @@ export default function Home() {
     };
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  useEffect(() => {
+    if (!mainContentRef.current) return;
+    
+    const container = mainContentRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const MIFFY_SIZE = 70;
+    const miffyCenterX = miffyPos.x + MIFFY_SIZE / 2 - containerRect.left;
+    const miffyCenterY = miffyPos.y + MIFFY_SIZE / 2 - containerRect.top;
+    
+    if (miffyActivated) {
+      container.style.maskImage = `radial-gradient(circle 55px at ${miffyCenterX}px ${miffyCenterY}px, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 60%, black 100%)`;
+      container.style.webkitMaskImage = `radial-gradient(circle 55px at ${miffyCenterX}px ${miffyCenterY}px, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 60%, black 100%)`;
+    } else {
+      container.style.maskImage = 'none';
+      container.style.webkitMaskImage = 'none';
+    }
+  }, [miffyPos, miffyActivated]);
+
   return (
     <>
       {miffyActivated && (
@@ -287,7 +313,7 @@ export default function Home() {
         )}
       </div>
 
-      <div className="space-y-4 text-sm leading-relaxed font-serif">
+      <div ref={mainContentRef} className="space-y-4 text-sm leading-relaxed font-serif">
         {/* <div className="bg-[#ad606e23] border-l-2 border-[#ad606ec7] rounded-r-lg px-4 py-3 max-w-[400px] font-[family-name:var(--font-inter)]">
           <div className="flex flex-wrap items-center gap-3">
             <span className="text-[#AD606E] font-semibold text-sm">
@@ -356,7 +382,7 @@ export default function Home() {
         <p className="pt-2 text-xl font-semibold text-[#AD606E] font-[family-name:var(--font-geist-mono)] tracking-tight">currently</p>
 
         <p>
-          right now, i'm building side projects on my twitter account and running
+          right now, i'm <s className="font-[family-name:var(--font-geist-mono)] font-semibold text-neutral-400 select-text">in class</s> building side projects on my twitter account and running
           the{" "}
           <a
             href="https://www.instagram.com/seattlejunkjournalclub/"
