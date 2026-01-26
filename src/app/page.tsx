@@ -9,63 +9,131 @@ export default function Home() {
   const [showPast, setShowPast] = useState(false);
   const [showMisc, setShowMisc] = useState(false);
   const [miffyPos, setMiffyPos] = useState({ x: 0, y: 0 });
+  const [miffyActivated, setMiffyActivated] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [miffyTongue, setMiffyTongue] = useState(false);
   const [runFrame, setRunFrame] = useState(0);
   const [isMoving, setIsMoving] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [isBouncing, setIsBouncing] = useState<'left' | 'right' | 'top' | 'bottom' | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const initialMiffyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isDragging && !isMoving) return;
+    const speed = isRunning ? 50 : 100;
     const interval = setInterval(() => {
       setRunFrame((prev) => (prev === 0 ? 1 : 0));
-    }, 100);
+    }, speed);
     return () => clearInterval(interval);
-  }, [isDragging, isMoving]);
+  }, [isDragging, isMoving, isRunning]);
 
   useEffect(() => {
-    const STEP = 15;
-    let moveTimeout: NodeJS.Timeout;
+    const STEP = 5;
+    const RUN_STEP = 12;
+    const MIFFY_SIZE = 70;
+    const keysHeld = new Set<string>();
+    let animationId: number;
+    let bounceTimeout: NodeJS.Timeout;
+    let shiftHeld = false;
+    let lastSpaceTime = 0;
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-      e.preventDefault();
-      
+    const triggerBounce = (dir: 'left' | 'right' | 'top' | 'bottom') => {
+      setIsBouncing(dir);
+      setMiffyTongue(true);
+      clearTimeout(bounceTimeout);
+      bounceTimeout = setTimeout(() => {
+        setIsBouncing(null);
+        setMiffyTongue(false);
+      }, 400);
+    };
+
+    const tick = () => {
+      if (keysHeld.size === 0) {
+        setIsMoving(false);
+        return;
+      }
       setIsMoving(true);
-      clearTimeout(moveTimeout);
-      moveTimeout = setTimeout(() => setIsMoving(false), 150);
-
+      const step = shiftHeld ? RUN_STEP : STEP;
+      setMiffyActivated(true);
       setMiffyPos((prev) => {
         let { x, y } = prev;
-        if (x === 0 && y === 0 && initialMiffyRef.current) {
+        if (!miffyActivated && initialMiffyRef.current) {
           const rect = initialMiffyRef.current.getBoundingClientRect();
           x = rect.left;
           y = rect.top;
         }
-        switch (e.key) {
-          case 'ArrowUp': return { x, y: y - STEP };
-          case 'ArrowDown': return { x, y: y + STEP };
-          case 'ArrowLeft': return { x: x - STEP, y };
-          case 'ArrowRight': return { x: x + STEP, y };
-          default: return { x, y };
-        }
+        if (keysHeld.has('ArrowUp') || keysHeld.has('w')) y -= step;
+        if (keysHeld.has('ArrowDown') || keysHeld.has('s')) y += step;
+        if (keysHeld.has('ArrowLeft') || keysHeld.has('a')) x -= step;
+        if (keysHeld.has('ArrowRight') || keysHeld.has('d')) x += step;
+        
+        const maxX = window.innerWidth - MIFFY_SIZE;
+        const maxY = window.innerHeight - MIFFY_SIZE;
+        
+        if (x <= 0) triggerBounce('left');
+        if (x >= maxX) triggerBounce('right');
+        if (y <= 0) triggerBounce('top');
+        if (y >= maxY) triggerBounce('bottom');
+        
+        x = Math.max(0, Math.min(maxX, x));
+        y = Math.max(0, Math.min(maxY, y));
+        return { x, y };
       });
+      animationId = requestAnimationFrame(tick);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        shiftHeld = true;
+        setIsRunning(true);
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        const now = Date.now();
+        if (now - lastSpaceTime < 300) {
+          setMiffyTongue(true);
+          setTimeout(() => setMiffyTongue(false), 1000);
+        }
+        lastSpaceTime = now;
+        return;
+      }
+      const moveKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'W', 'A', 'S', 'D'];
+      if (!moveKeys.includes(e.key)) return;
+      e.preventDefault();
+      const key = e.key.startsWith('Arrow') ? e.key : e.key.toLowerCase();
+      if (!keysHeld.has(key)) {
+        keysHeld.add(key);
+        if (keysHeld.size === 1) animationId = requestAnimationFrame(tick);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        shiftHeld = false;
+        setIsRunning(false);
+      }
+      const key = e.key.startsWith('Arrow') ? e.key : e.key.toLowerCase();
+      keysHeld.delete(key);
+      if (keysHeld.size === 0) setIsMoving(false);
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(moveTimeout);
+      window.removeEventListener('keyup', handleKeyUp);
+      cancelAnimationFrame(animationId);
+      clearTimeout(bounceTimeout);
     };
   }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     e.preventDefault();
-    setMiffyPos({
-      x: e.clientX - dragOffsetRef.current.x,
-      y: e.clientY - dragOffsetRef.current.y,
-    });
+    const MIFFY_SIZE = 70;
+    const x = Math.max(0, Math.min(window.innerWidth - MIFFY_SIZE, e.clientX - dragOffsetRef.current.x));
+    const y = Math.max(0, Math.min(window.innerHeight - MIFFY_SIZE, e.clientY - dragOffsetRef.current.y));
+    setMiffyPos({ x, y });
   }, []);
 
   const handleMouseUp = useCallback(() => {
@@ -81,6 +149,10 @@ export default function Home() {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     };
+    if (!miffyActivated) {
+      setMiffyPos({ x: rect.left, y: rect.top });
+      setMiffyActivated(true);
+    }
     setIsDragging(true);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -88,11 +160,11 @@ export default function Home() {
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     e.preventDefault();
+    const MIFFY_SIZE = 70;
     const touch = e.touches[0];
-    setMiffyPos({
-      x: touch.clientX - dragOffsetRef.current.x,
-      y: touch.clientY - dragOffsetRef.current.y,
-    });
+    const x = Math.max(0, Math.min(window.innerWidth - MIFFY_SIZE, touch.clientX - dragOffsetRef.current.x));
+    const y = Math.max(0, Math.min(window.innerHeight - MIFFY_SIZE, touch.clientY - dragOffsetRef.current.y));
+    setMiffyPos({ x, y });
   }, []);
 
   const handleTouchEnd = useCallback(() => {
@@ -109,6 +181,10 @@ export default function Home() {
       x: touch.clientX - rect.left,
       y: touch.clientY - rect.top,
     };
+    if (!miffyActivated) {
+      setMiffyPos({ x: rect.left, y: rect.top });
+      setMiffyActivated(true);
+    }
     setIsDragging(true);
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd);
@@ -130,7 +206,7 @@ export default function Home() {
 
   return (
     <>
-      {(miffyPos.x !== 0 || miffyPos.y !== 0) && (
+      {miffyActivated && (
         <div
           className="fixed z-50 cursor-grab active:cursor-grabbing select-none touch-none"
           style={{ 
@@ -146,7 +222,7 @@ export default function Home() {
             alt="miffy"
             width={70}
             height={70}
-            className="drop-shadow-lg pointer-events-none miffy-wobble shrink-0"
+            className={`drop-shadow-lg pointer-events-none shrink-0 ${isBouncing ? `miffy-wall-bounce-${isBouncing}` : 'miffy-wobble'}`}
             draggable={false}
           />
         </div>
@@ -182,7 +258,7 @@ export default function Home() {
             </a>
           </div>
         </div>
-        {miffyPos.x === 0 && miffyPos.y === 0 && (
+        {!miffyActivated && (
           <div
             ref={initialMiffyRef}
             className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none touch-none"
