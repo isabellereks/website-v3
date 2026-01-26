@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, TwitterIcon, Bookmark01Icon, YelpIcon, Linkedin01Icon } from "@hugeicons/core-free-icons";
@@ -10,91 +10,139 @@ export default function Home() {
   const [showMisc, setShowMisc] = useState(false);
   const [miffyPos, setMiffyPos] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [miffyTongue, setMiffyTongue] = useState(false);
   const [runFrame, setRunFrame] = useState(0);
+  const [isMoving, setIsMoving] = useState(false);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const initialMiffyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isDragging) {
-      const interval = setInterval(() => {
-        setRunFrame((prev) => (prev === 0 ? 1 : 0));
-      }, 100);
-      return () => clearInterval(interval);
-    }
-  }, [isDragging]);
+    if (!isDragging && !isMoving) return;
+    const interval = setInterval(() => {
+      setRunFrame((prev) => (prev === 0 ? 1 : 0));
+    }, 100);
+    return () => clearInterval(interval);
+  }, [isDragging, isMoving]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setDragOffset({
+  useEffect(() => {
+    const STEP = 15;
+    let moveTimeout: NodeJS.Timeout;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+      e.preventDefault();
+      
+      setIsMoving(true);
+      clearTimeout(moveTimeout);
+      moveTimeout = setTimeout(() => setIsMoving(false), 150);
+
+      setMiffyPos((prev) => {
+        let { x, y } = prev;
+        if (x === 0 && y === 0 && initialMiffyRef.current) {
+          const rect = initialMiffyRef.current.getBoundingClientRect();
+          x = rect.left;
+          y = rect.top;
+        }
+        switch (e.key) {
+          case 'ArrowUp': return { x, y: y - STEP };
+          case 'ArrowDown': return { x, y: y + STEP };
+          case 'ArrowLeft': return { x: x - STEP, y };
+          case 'ArrowRight': return { x: x + STEP, y };
+          default: return { x, y };
+        }
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(moveTimeout);
+    };
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    e.preventDefault();
+    setMiffyPos({
+      x: e.clientX - dragOffsetRef.current.x,
+      y: e.clientY - dragOffsetRef.current.y,
+    });
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+    window.removeEventListener('mousemove', handleMouseMove);
+    window.removeEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    dragOffsetRef.current = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
-    });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setMiffyPos({
-      x: e.clientX - dragOffset.x,
-      y: e.clientY - dragOffset.y,
-    });
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
+    };
     setIsDragging(true);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }, [handleMouseMove, handleMouseUp]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    e.preventDefault();
     const touch = e.touches[0];
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
-    setDragOffset({
+    setMiffyPos({
+      x: touch.clientX - dragOffsetRef.current.x,
+      y: touch.clientY - dragOffsetRef.current.y,
+    });
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    window.removeEventListener('touchmove', handleTouchMove);
+    window.removeEventListener('touchend', handleTouchEnd);
+  }, [handleTouchMove]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    dragOffsetRef.current = {
       x: touch.clientX - rect.left,
       y: touch.clientY - rect.top,
-    });
-  };
+    };
+    setIsDragging(true);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
+  }, [handleTouchMove, handleTouchEnd]);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    setMiffyPos({
-      x: touch.clientX - dragOffset.x,
-      y: touch.clientY - dragOffset.y,
-    });
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
-
-  const handleDoubleClick = () => {
+  const handleDoubleClick = useCallback(() => {
     setMiffyTongue(true);
     setTimeout(() => setMiffyTongue(false), 1000);
-  };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   return (
     <>
       {(miffyPos.x !== 0 || miffyPos.y !== 0) && (
         <div
-          className="fixed z-50 cursor-grab active:cursor-grabbing select-none"
+          className="fixed z-50 cursor-grab active:cursor-grabbing select-none touch-none"
           style={{ 
-            left: miffyPos.x,
-            top: miffyPos.y,
-            WebkitTapHighlightColor: 'transparent',
-            WebkitTouchCallout: 'none',
-            WebkitUserSelect: 'none',
+            transform: `translate3d(${miffyPos.x}px, ${miffyPos.y}px, 0)`,
+            willChange: 'transform',
           }}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
           onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           onDoubleClick={handleDoubleClick}
         >
           <img
-            src={miffyTongue ? "/miffy-tongue.png" : isDragging ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
+            src={miffyTongue ? "/miffy-tongue.png" : (isDragging || isMoving) ? (runFrame === 0 ? "/miffy-left.png" : "/miffy-right.png") : "/miffy2.png"}
             alt="miffy"
             width={70}
             height={70}
@@ -113,8 +161,8 @@ export default function Home() {
           className="rounded-full shrink-0"
         />
         <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold font-[family-name:var(--font-geist-mono)]">
-            <span className="shimmer">Isabelle<br className="md:hidden" /> Reksopuro</span>
+          <h1 className="text-3xl font-semibold font-[family-name:var(--font-geist-mono)]">
+            <span className="shimmer">isabelle<br className="md:hidden" /> reksopuro</span>
           </h1>
           <div className="flex gap-4">
             <a href="mailto:reksopuro.isabelle@gmail.com" className="text-[#3a5b39] hover:text-[#2d472d] transition-colors" title="email">
@@ -136,19 +184,10 @@ export default function Home() {
         </div>
         {miffyPos.x === 0 && miffyPos.y === 0 && (
           <div
-            className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none"
-            style={{ 
-              WebkitTapHighlightColor: 'transparent',
-              WebkitTouchCallout: 'none',
-              WebkitUserSelect: 'none',
-            }}
+            ref={initialMiffyRef}
+            className="absolute right-0 top-0 cursor-grab active:cursor-grabbing select-none touch-none"
             onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
             onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
             onDoubleClick={handleDoubleClick}
           >
             <img
@@ -206,7 +245,7 @@ export default function Home() {
 
         <p>
           hi! i'm isabelle, an indonesian-american <span className="inline-block animate-pulse">🇮🇩🇺🇸</span> @{" "}
-          <a href="https://www.washington.edu/" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+          <a href="https://www.washington.edu/" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
             university of washington
           </a>{" "}
           exploring the intersection of tech & public policy.
@@ -223,27 +262,27 @@ export default function Home() {
           on the side, i plan on traveling the world + eating through all the
           cuisines it has to offer. if you're also curious about tech or want to
           get a matcha,{" "}
-          <a href="https://cal.com/isabellereks" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+          <a href="https://cal.com/isabellereks" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
             let's chat
           </a>
           !
         </p>
 
-        <p className="pt-2 text-xl font-bold text-[#AD606E] font-[family-name:var(--font-geist-mono)]">currently</p>
+        <p className="pt-2 text-xl font-semibold text-[#AD606E] font-[family-name:var(--font-geist-mono)] tracking-tight">currently</p>
 
         <p>
           right now, i'm building side projects on my twitter account and running
           the{" "}
           <a
             href="https://www.instagram.com/seattlejunkjournalclub/"
-            className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+            className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
           >
             seattle junk journal club
           </a>
           ! i'm also getting back into writing (check out{" "}
           <a
             href="https://isabellereksopuro.substack.com/"
-            className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+            className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
           >
             my substack
           </a>
@@ -255,7 +294,7 @@ export default function Home() {
           sexual assault task force with{" "}
           <a
             href="https://www.advocatesforyouth.org/"
-            className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+            className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
           >
             advocates for youth
           </a>{" "}
@@ -264,11 +303,11 @@ export default function Home() {
 
         <p>
           in my spare time, i help lead the student ambassador program at the{" "}
-          <a href="https://aaylc.org" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+          <a href="https://aaylc.org" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
             asian american youth leadership conference
           </a>{" "}
           for 600+ students! i also created their 2024 and 2025 booklet with my
-          experience at <a href="https://www.fedex.com" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">fedex</a>.
+          experience at <a href="https://www.fedex.com" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">fedex</a>.
         </p>
 
         <p>
@@ -283,8 +322,8 @@ export default function Home() {
         {showPast && (
           <div className="text-neutral-600 space-y-3 pl-4 border-l-2 border-neutral-200">
             <p>
-              i just finished interning at the{" "}
-              <a href="https://www.napca.org/" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+              in 2025, i interned at the{" "}
+              <a href="https://www.napca.org/" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
                 national asian pacific center of aging
               </a>
               , and i worked on their public policy initiative and caregiver project,
@@ -294,10 +333,25 @@ export default function Home() {
               sphere.
             </p>
             <p>
+              i also worked with{" "}
+              <a href="https://million.dev" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+                million
+              </a>{" "}
+              helping with operations + working with content creators / growth. hosted 2{" "}
+              <a href="https://lu.ma/vev6er27" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+                matcha events
+              </a>{" "}
+              with over 200+ in attendance and 300+ on the waitlist, and yc's first{" "}
+              <a href="https://lu.ma/hzwlapu0" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+                agents hackathon
+              </a>
+              .
+            </p>
+            <p>
               in 2024, i worked at the{" "}
               <a
                 href="https://www.seattle.gov/city-light"
-                className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+                className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
               >
                 city of seattle
               </a>{" "}
@@ -309,7 +363,7 @@ export default function Home() {
               during 2023, i worked with{" "}
               <a
                 href="https://www.oregonhealthequity.org/"
-                className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+                className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
               >
                 oregon health equity alliance
               </a>{" "}
@@ -318,7 +372,7 @@ export default function Home() {
               i've also worked with{" "}
               <a
                 href="https://www.coalitioncommunitiescolor.org/"
-                className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+                className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
               >
                 coalition of communities of color
               </a>{" "}
@@ -329,7 +383,7 @@ export default function Home() {
               in the summer of 2022, i did a mentorship at{" "}
               <a
                 href="https://www.swri.org/content/home"
-                className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
+                className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]"
               >
                 southwest research institute
               </a>{" "}
@@ -359,12 +413,12 @@ export default function Home() {
           <div className="text-neutral-600 space-y-3 pl-4 border-l-2 border-neutral-200">
             <p>
               i like binging k-dramas (ask me what i'm watching!), downing gallons of
-              matcha, baking the latest tiktok trend, and reading at 1,200+ WPM
+              matcha, baking blueberry scones, and reading at 1,200+ WPM
               (unofficially benchmarked).
             </p>
             {/* <p>
               thank you to{" "}
-              <a href="https://annasgarden.dev" className="font-bold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
+              <a href="https://annasgarden.dev" className="font-semibold hover:text-neutral-500 font-[family-name:var(--font-geist-mono)]">
                 anna's garden
               </a>{" "}
               for the inspiration! (hint: enter the garden!)
@@ -372,7 +426,7 @@ export default function Home() {
           </div>
         )}
 
-        <p className="pt-8 text-center text-neutral-400 text-xs font-[family-name:var(--font-geist-mono)]">
+        <p className="pt-8 text-center text-neutral-400 text-[10px] font-[family-name:var(--font-geist-mono)]">
           made with stardust ★ by isabelle
         </p>
       </div>
