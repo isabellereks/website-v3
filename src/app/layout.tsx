@@ -16,6 +16,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Isabelle Reksopuro",
   description: "Personal website of Isabelle Reksopuro",
+  openGraph: {
+    title: "Isabelle Reksopuro",
+    description: "Personal website of Isabelle Reksopuro",
+    images: [{ url: "/headshot.jpeg", width: 400, height: 400 }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Isabelle Reksopuro",
+    images: ["/headshot.jpeg"],
+  },
+  icons: {
+    icon: "/icon.jpg",
+    apple: "/headshot.jpeg",
+  },
 };
 
 export default function RootLayout({
