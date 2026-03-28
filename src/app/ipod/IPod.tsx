@@ -746,53 +746,77 @@ function ClickWheel({ onMenu, onSelect, onPrev, onNext, onPlayPause, onScrollUp,
   const lastAngle = useRef<number | null>(null);
   const accumulated = useRef<number>(0);
 
-  const getAngle = (e: MouseEvent): number => {
+  const getAngleFromXY = (clientX: number, clientY: number): number => {
     const rect = wheelRef.current!.getBoundingClientRect();
-    return Math.atan2(e.clientY - (rect.top + rect.height / 2), e.clientX - (rect.left + rect.width / 2));
+    return Math.atan2(clientY - (rect.top + rect.height / 2), clientX - (rect.left + rect.width / 2));
   };
 
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent): void => {
-      if (!isDragging.current) return;
-      const angle = getAngle(e);
-      if (lastAngle.current !== null) {
-        let delta = angle - lastAngle.current;
-        if (delta > Math.PI) delta -= 2 * Math.PI;
-        if (delta < -Math.PI) delta += 2 * Math.PI;
-        accumulated.current += delta;
-        if (Math.abs(accumulated.current) > 0.4) {
-          if (accumulated.current > 0) { hapticClick(); onScrollDown(); } else { hapticClick(); onScrollUp(); }
-          accumulated.current = 0;
-        }
-      }
-      lastAngle.current = angle;
-    };
-    const onMouseUp = (): void => { isDragging.current = false; lastAngle.current = null; accumulated.current = 0; };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    return () => { window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); };
-  }, [onScrollUp, onScrollDown]);
-
-  const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>): void => {
+  const isInCenter = (clientX: number, clientY: number): boolean => {
     const rect = wheelRef.current!.getBoundingClientRect();
-    if (Math.hypot(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2)) < 40) return;
-    isDragging.current = true;
-    lastAngle.current = getAngle(e.nativeEvent);
+    return Math.hypot(clientX - (rect.left + rect.width / 2), clientY - (rect.top + rect.height / 2)) < 40;
+  };
+
+  const handleDragMove = (clientX: number, clientY: number): void => {
+    if (!isDragging.current) return;
+    const angle = getAngleFromXY(clientX, clientY);
+    if (lastAngle.current !== null) {
+      let delta = angle - lastAngle.current;
+      if (delta > Math.PI) delta -= 2 * Math.PI;
+      if (delta < -Math.PI) delta += 2 * Math.PI;
+      accumulated.current += delta;
+      if (Math.abs(accumulated.current) > 0.4) {
+        if (accumulated.current > 0) { hapticClick(); onScrollDown(); } else { hapticClick(); onScrollUp(); }
+        accumulated.current = 0;
+      }
+    }
+    lastAngle.current = angle;
+  };
+
+  const handleDragEnd = (): void => {
+    isDragging.current = false;
+    lastAngle.current = null;
     accumulated.current = 0;
   };
 
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent): void => handleDragMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent): void => { if (e.touches[0]) { e.preventDefault(); handleDragMove(e.touches[0].clientX, e.touches[0].clientY); } };
+    const onEnd = (): void => handleDragEnd();
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchend', onEnd);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onEnd);
+    };
+  }, [onScrollUp, onScrollDown]);
+
+  const handleStart = (clientX: number, clientY: number): void => {
+    if (isInCenter(clientX, clientY)) return;
+    isDragging.current = true;
+    lastAngle.current = getAngleFromXY(clientX, clientY);
+    accumulated.current = 0;
+  };
+
+  const handleMouseDown = (e: ReactMouseEvent<HTMLDivElement>): void => handleStart(e.clientX, e.clientY);
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>): void => { if (e.touches[0]) handleStart(e.touches[0].clientX, e.touches[0].clientY); };
+
   return (
     <div className="ipod-wheel-container">
-      <div ref={wheelRef} className="ipod-wheel" onMouseDown={handleMouseDown} onWheel={(e) => { e.preventDefault(); if (e.deltaY > 0) { hapticClick(); onScrollDown(); } else if (e.deltaY < 0) { hapticClick(); onScrollUp(); } }}>
+      <div ref={wheelRef} className="ipod-wheel" onMouseDown={handleMouseDown} onTouchStart={handleTouchStart} onWheel={(e) => { e.preventDefault(); if (e.deltaY > 0) { hapticClick(); onScrollDown(); } else if (e.deltaY < 0) { hapticClick(); onScrollUp(); } }}>
         <span className="wheel-label wheel-label-menu">MENU</span>
         <span className="wheel-label wheel-label-prev">|&#9664;&#9664;</span>
         <span className="wheel-label wheel-label-next">&#9654;&#9654;|</span>
         <span className="wheel-label wheel-label-play">&#9654;||</span>
-        <button className="wheel-btn wheel-btn-menu" onMouseDown={e => e.stopPropagation()} onClick={() => { hapticClick(); onMenu(); }} aria-label="Menu" />
-        <button className="wheel-btn wheel-btn-prev" onMouseDown={e => e.stopPropagation()} onClick={() => { hapticClick(); onPrev(); }} aria-label="Previous" />
-        <button className="wheel-btn wheel-btn-next" onMouseDown={e => e.stopPropagation()} onClick={() => { hapticClick(); onNext(); }} aria-label="Next" />
-        <button className="wheel-btn wheel-btn-play" onMouseDown={e => e.stopPropagation()} onClick={() => { hapticClick(); onPlayPause(); }} aria-label="Play/Pause" />
-        <div className="ipod-wheel-center" onMouseDown={e => e.stopPropagation()} onClick={() => { hapticClick(); onSelect(); }} role="button" aria-label="Select" />
+        <button className="wheel-btn wheel-btn-menu" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => { hapticClick(); onMenu(); }} aria-label="Menu" />
+        <button className="wheel-btn wheel-btn-prev" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => { hapticClick(); onPrev(); }} aria-label="Previous" />
+        <button className="wheel-btn wheel-btn-next" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => { hapticClick(); onNext(); }} aria-label="Next" />
+        <button className="wheel-btn wheel-btn-play" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => { hapticClick(); onPlayPause(); }} aria-label="Play/Pause" />
+        <div className="ipod-wheel-center" onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={() => { hapticClick(); onSelect(); }} role="button" aria-label="Select" />
       </div>
     </div>
   );

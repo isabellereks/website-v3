@@ -265,7 +265,7 @@
 /* ── Toggle ── */
 .ipod-toggle-bar {
   position: fixed;
-  bottom: 80px;
+  bottom: 20px;
   left: 0;
   right: 0;
   display: flex;
@@ -275,6 +275,12 @@
   border: none;
   padding: 6px;
   cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .ipod-toggle-bar {
+    bottom: 80px;
+  }
 }
 
 .toggle-track {
