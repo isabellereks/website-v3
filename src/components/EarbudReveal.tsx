@@ -36,7 +36,7 @@ export default function EarbudReveal() {
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1], exit: { duration: 0.15 } }}
+            transition={{ duration: 1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
             onMouseEnter={handleClick}
             onClick={handleClick}
           >
