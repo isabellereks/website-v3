@@ -56,10 +56,20 @@ interface ClickWheelProps {
 }
 
 // Haptic click feedback
+// iOS haptic feedback
+let iosHaptic: (() => void) | null = null;
+if (typeof window !== 'undefined') {
+  import('ios-haptics').then(({ haptic, supportsHaptics }) => {
+    if (supportsHaptics) iosHaptic = haptic;
+  }).catch(() => {});
+}
+
 function hapticClick(): void {
-  // Vibration API (mobile)
-  if (navigator.vibrate) navigator.vibrate(5);
-  // Audio click (subtle)
+  // iOS haptics
+  if (iosHaptic) { iosHaptic(); return; }
+  // Android vibration
+  if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(5);
+  // Audio click fallback (desktop)
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
