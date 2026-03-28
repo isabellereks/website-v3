@@ -1,0 +1,1492 @@
+/* ── iPod Classic ── */
+/* Scoped under .ipod-page for specificity over Tailwind preflight */
+
+.ipod-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ── Body ── */
+.ipod-page .ipod-body {
+  width: 320px;
+  height: 580px;
+  background: linear-gradient(
+    170deg,
+    #d4d4d4 0%,
+    #c8c8c8 5%,
+    #bfbfbf 15%,
+    #b8b8b8 30%,
+    #c0c0c0 50%,
+    #b5b5b5 70%,
+    #a8a8a8 90%,
+    #9e9e9e 100%
+  );
+  border-radius: 24px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.3),
+    0 2px 0 0 rgba(180, 180, 180, 0.5),
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
+    inset 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset -1px 0 0 rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 18px 16px;
+  position: relative;
+}
+
+/* Brushed metal texture */
+.ipod-page .ipod-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 1px,
+    rgba(255, 255, 255, 0.03) 1px,
+    rgba(255, 255, 255, 0.03) 2px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Dark edge vignette for depth */
+.ipod-page .ipod-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  box-shadow:
+    inset 4px 0 12px rgba(0, 0, 0, 0.15),
+    inset -4px 0 12px rgba(0, 0, 0, 0.15),
+    inset 0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Screen bezel ── */
+.ipod-page .ipod-screen-bezel {
+  width: 282px;
+  height: 230px;
+  background: linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+  border-radius: 5px;
+  padding: 5px;
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 0 rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+/* ── Screen ── */
+.ipod-page .ipod-screen {
+  width: 100%;
+  height: 100%;
+  background: #f0f0ee;
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Title bar ── */
+.ipod-page .ipod-titlebar {
+  height: 22px;
+  min-height: 22px;
+  background: linear-gradient(180deg, #6fa3e7 0%, #3a7bd5 40%, #2e6bc4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  position: relative;
+  padding: 0 10px;
+}
+
+.ipod-page .ipod-titlebar-text {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25px;
+}
+
+.ipod-page .ipod-titlebar-back {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.ipod-page .ipod-titlebar-battery {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.ipod-page .battery-body {
+  width: 20px;
+  height: 10px;
+  border: 1px solid #555;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.ipod-page .battery-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    #5a9e3a 0%,
+    #6db848 15%,
+    #a8e470 30%,
+    #b8ee80 40%,
+    #7cc84c 55%,
+    #5aaa34 70%,
+    #4a9428 100%
+  );
+}
+
+.ipod-page .battery-tip {
+  width: 2px;
+  height: 5px;
+  background: transparent;
+  border: 1px solid #555;
+  border-left: none;
+  border-radius: 0 2px 2px 0;
+  margin-left: -1px;
+}
+
+/* ── Screen content ── */
+.ipod-page .ipod-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Menu list ── */
+.ipod-page .ipod-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ipod-page .ipod-menu-item {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 10px;
+  font-size: 13px;
+  color: #000;
+  cursor: pointer;
+  border-bottom: 1px solid #e0e0e0;
+  list-style: none;
+}
+
+.ipod-page .ipod-menu-item.selected {
+  background: linear-gradient(180deg, #6fa3e7 0%, #3a7bd5 40%, #2e6bc4 100%);
+  color: #fff;
+}
+
+.ipod-page .ipod-menu-item .arrow {
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.ipod-page .ipod-menu-item.selected .arrow {
+  opacity: 0.9;
+}
+
+/* ── Now Playing ── */
+.ipod-page .now-playing {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 6px 10px;
+  position: relative;
+}
+
+.ipod-page .now-playing-info {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.ipod-page .now-playing-art-wrapper {
+  perspective: 500px;
+  flex-shrink: 0;
+  width: 115px;
+  margin-top: 14px;
+}
+
+.ipod-page .now-playing-art {
+  width: 105px;
+  height: 105px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.15);
+  transform: rotateY(20deg);
+}
+
+.ipod-page .now-playing-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+
+.ipod-page .now-playing-art-placeholder {
+  font-size: 40px;
+  color: #999;
+}
+
+.ipod-page .now-playing-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 14px;
+  line-height: 1.4;
+}
+
+.ipod-page .now-playing-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .now-playing-artist,
+.ipod-page .now-playing-album {
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Progress ── */
+.ipod-page .now-playing-progress {
+  margin-top: auto;
+  padding-top: 0;
+  margin-bottom: 8px;
+}
+
+.ipod-page .now-playing-tracknum {
+  font-size: 11px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.ipod-page .progress-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ipod-page .progress-bar-row .progress-bar-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.ipod-page .now-playing-heart {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ipod-page .now-playing-submitted {
+  font-size: 9px;
+  color: #999;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.ipod-page .progress-heart-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 2px;
+}
+
+.ipod-page .progress-time-left,
+.ipod-page .progress-time-right {
+  font-size: 10px;
+  font-weight: 600;
+  color: #000;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ipod-page .progress-bar-container {
+  width: 100%;
+  height: 10px;
+  background: #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  border: 1px solid #ccc;
+}
+
+.ipod-page .progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(180deg, #6fa3e7 0%, #3a7bd5 50%, #2e6bc4 100%);
+  border-radius: 5px;
+  transition: width 0.1s linear;
+}
+
+/* ── Preview badge ── */
+.ipod-page .preview-badge {
+  display: inline-block;
+  font-size: 9px;
+  background: #3a7bd5;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 4px;
+  vertical-align: middle;
+  font-weight: 600;
+}
+
+/* ── Click wheel ── */
+.ipod-page .ipod-wheel-container {
+  margin-top: 40px;
+  z-index: 1;
+  position: relative;
+  width: 224px;
+  height: 224px;
+}
+
+.ipod-page .ipod-wheel {
+  width: 224px;
+  height: 224px;
+  border-radius: 50%;
+  background: linear-gradient(
+    160deg,
+    #f5f5f5 0%,
+    #efefef 20%,
+    #e8e8e8 40%,
+    #e4e4e4 60%,
+    #e0e0e0 80%,
+    #ddd 100%
+  );
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.12),
+    inset 0 -1px 3px rgba(255, 255, 255, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  cursor: pointer;
+}
+
+
+.ipod-page .ipod-wheel-center {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(
+    160deg,
+    #ccc 0%,
+    #c0c0c0 40%,
+    #b8b8b8 100%
+  );
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+
+.ipod-page .ipod-wheel-center:active {
+  background: linear-gradient(160deg, #b5b5b5 0%, #aaa 100%);
+  box-shadow:
+    0 0 2px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* Wheel labels */
+.ipod-page .wheel-label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  z-index: 1;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+
+.ipod-page .wheel-label-menu {
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.ipod-page .wheel-label-prev {
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+}
+
+.ipod-page .wheel-label-next {
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+}
+
+.ipod-page .wheel-label-play {
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+}
+
+/* Wheel button zones */
+.ipod-page .wheel-btn {
+  position: absolute;
+  z-index: 1;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.ipod-page .wheel-btn:active {
+  opacity: 0.5;
+}
+
+.ipod-page .wheel-btn-menu {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 50px;
+}
+
+.ipod-page .wheel-btn-prev {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 80px;
+}
+
+.ipod-page .wheel-btn-next {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 80px;
+}
+
+.ipod-page .wheel-btn-play {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 50px;
+}
+
+/* ── Search screen (on iPod) ── */
+.ipod-page .ipod-search-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 6px;
+  padding: 10px;
+}
+
+.ipod-page .ipod-search-prompt {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ipod-page .ipod-search-hint {
+  font-size: 11px;
+  color: #999;
+}
+
+.ipod-page .ipod-search-error {
+  font-size: 11px;
+  color: #c00;
+  text-align: center;
+  max-width: 90%;
+}
+
+/* Floating search input above iPod */
+.ipod-search-input-wrapper {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -340px);
+  z-index: 50;
+  animation: ipod-fadeIn 0.2s ease;
+}
+
+@keyframes ipod-fadeIn {
+  from { opacity: 0; transform: translate(-50%, -330px); }
+  to { opacity: 1; transform: translate(-50%, -340px); }
+}
+
+.ipod-search-input {
+  width: 320px;
+  padding: 12px 16px;
+  font-size: 15px;
+  border: 2px solid #3a7bd5;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  color: #000;
+}
+
+.ipod-search-input::placeholder {
+  color: #aaa;
+}
+
+/* Search result items */
+.ipod-page .search-result-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ipod-page .search-result-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 2px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ipod-page .search-result-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.ipod-page .search-result-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .search-result-artist {
+  font-size: 10px;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .ipod-menu-item.selected .search-result-artist {
+  opacity: 0.85;
+}
+
+/* ── About screen ── */
+.ipod-page .about-screen {
+  padding: 10px 12px;
+  height: 100%;
+}
+
+.ipod-page .about-name {
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 0 10px;
+  color: #000;
+}
+
+.ipod-page .about-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.ipod-page .about-label {
+  color: #000;
+  font-weight: 600;
+}
+
+.ipod-page .about-value {
+  color: #666;
+}
+
+.ipod-page .about-divider {
+  height: 8px;
+}
+
+/* ── Song list items ── */
+.ipod-page .song-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+  gap: 1px;
+}
+
+.ipod-page .song-item-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .song-item-artist {
+  font-size: 10px;
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .ipod-menu-item.selected .song-item-artist {
+  opacity: 0.8;
+}
+
+.ipod-page .heart-count-small {
+  font-size: 10px;
+  color: #e55;
+  white-space: nowrap;
+}
+
+.ipod-page .ipod-menu-item.selected .heart-count-small {
+  color: #fcc;
+}
+
+/* ── Now Playing community line ── */
+.ipod-page .now-playing-community {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #888;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipod-page .heart-btn {
+  cursor: pointer;
+  font-size: 14px;
+  color: #ccc;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+
+.ipod-page .heart-btn.liked {
+  color: #AD606E;
+}
+
+.ipod-page .heart-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.ipod-page .submitted-by {
+  font-size: 10px;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Add Song Panel (floating above iPod) ── */
+.add-panel {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin: 0 auto 12px;
+  width: 260px;
+  z-index: 50;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.add-panel-input {
+  width: 100%;
+  padding: 10px 20px;
+  background: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 13px;
+  color: #333;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.add-panel-input:focus {
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.16);
+}
+
+.add-panel-input::placeholder {
+  color: #bbb;
+}
+
+.add-panel-error {
+  color: #f66;
+  font-size: 11px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+
+.add-panel-results {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.add-panel-result {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.add-panel-result:hover {
+  background: #2a2a2a;
+}
+
+.add-panel-result.picked {
+  background: #253550;
+  border-color: #3a7bd5;
+}
+
+.add-panel-art {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  object-fit: cover;
+  background: #333;
+  flex-shrink: 0;
+}
+
+.add-panel-art-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #666;
+}
+
+.add-panel-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-panel-artist {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-panel-submit {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.add-panel-name {
+  font-size: 12px;
+}
+
+.add-panel-go {
+  padding: 8px 16px;
+  background: #1db954;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.add-panel-go:disabled {
+  opacity: 0.4;
+}
+
+.add-panel-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.add-panel-close:hover {
+  color: #fff;
+}
+
+.add-panel-picked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.add-panel-picked-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.add-panel-picked-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-panel-picked-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-panel-picked-artist {
+  font-size: 11px;
+  color: #888;
+}
+
+/* ── Add Song button (always blue) ── */
+.ipod-page .ipod-menu-item.add-song-item {
+  background: linear-gradient(180deg, #6fa3e7 0%, #3a7bd5 40%, #2e6bc4 100%);
+  color: #fff;
+}
+
+/* ── Confirm Add screen ── */
+.ipod-page .confirm-add-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 14px;
+  height: 100%;
+  gap: 3px;
+}
+
+.ipod-page .confirm-add-art {
+  width: 70px;
+  height: 70px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.ipod-page .confirm-add-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ipod-page .confirm-add-art-placeholder {
+  font-size: 28px;
+  color: #999;
+}
+
+.ipod-page .confirm-add-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #000;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ipod-page .confirm-add-artist {
+  font-size: 11px;
+  color: #666;
+  text-align: center;
+}
+
+.ipod-page .confirm-add-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.ipod-page .confirm-add-label {
+  font-size: 11px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.ipod-page .confirm-add-name {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 11px;
+  outline: none;
+  font-family: inherit;
+  color: #000;
+  background: #fff;
+}
+
+.ipod-page .confirm-add-name:focus {
+  border-color: #3a7bd5;
+}
+
+.ipod-page .confirm-add-name::placeholder {
+  color: #aaa;
+}
+
+/* ── Stub screens ── */
+.ipod-page .stub-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-size: 13px;
+}
+
+/* ── Admin page ── */
+.admin-page {
+  min-height: 100vh;
+  background: #fff;
+  color: #333;
+  font-family: Georgia, 'Times New Roman', serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 40px 20px;
+}
+
+.admin-container {
+  max-width: 650px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.admin-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #AD606E;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-link {
+  color: #AD606E;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-link:hover {
+  text-decoration: underline;
+}
+
+.admin-search-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.admin-search-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 14px;
+  background: #fff;
+  border: 2px solid #AD606E40;
+  border-radius: 12px;
+  color: #333;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-search-input:focus {
+  border-color: #AD606E;
+}
+
+.admin-search-input::placeholder {
+  color: #bbb;
+}
+
+.admin-search-btn {
+  padding: 12px 24px;
+  background: #AD606E;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-search-btn:hover {
+  background: #c47080;
+}
+
+.admin-search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-results {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #faf6f7;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-result-item:hover {
+  background: #f0e8ea;
+}
+
+.admin-result-art {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #eee;
+}
+
+.admin-result-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-result-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-result-artist {
+  font-size: 12px;
+  color: #999;
+}
+
+.admin-add-btn {
+  padding: 6px 14px;
+  background: #AD606E;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-add-btn:hover {
+  background: #c47080;
+}
+
+.admin-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.admin-section {
+  margin-bottom: 40px;
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #AD606E;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-track-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #faf6f7;
+  border-radius: 12px;
+}
+
+.admin-track-art {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #ccc;
+}
+
+.admin-track-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-track-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-track-artist {
+  font-size: 12px;
+  color: #999;
+}
+
+.admin-track-badges {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-delete-btn {
+  padding: 4px 10px;
+  background: transparent;
+  color: #ccc;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  transition: all 0.15s;
+}
+
+.admin-delete-btn:hover {
+  background: #e55;
+  color: #fff;
+  border-color: #e55;
+}
+
+.admin-playlist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #faf6f7;
+  border-radius: 12px;
+}
+
+.admin-playlist-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-playlist-count {
+  font-size: 12px;
+  color: #999;
+}
+
+.admin-playlist-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-create-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.admin-create-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: #fff;
+  border: 2px solid #AD606E40;
+  border-radius: 12px;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-create-input:focus {
+  border-color: #AD606E;
+}
+
+.admin-create-btn {
+  padding: 10px 20px;
+  background: #AD606E;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-create-btn:hover {
+  background: #c47080;
+}
+
+.admin-playlist-editor {
+  margin-top: 8px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 2px solid #AD606Ec7;
+}
+
+.admin-playlist-editor-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #AD606E;
+  margin-bottom: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-track-add-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0e8ea;
+}
+
+.admin-track-add-name {
+  flex: 1;
+  font-size: 13px;
+  color: #555;
+}
+
+.admin-track-toggle {
+  padding: 3px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  transition: all 0.15s;
+}
+
+.admin-track-toggle.in-playlist {
+  background: #3a5b39;
+  color: #fff;
+}
+
+.admin-track-toggle.not-in-playlist {
+  background: #f0e8ea;
+  color: #AD606E;
+}
+
+/* Admin login */
+.admin-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.admin-login-form {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-login-input {
+  padding: 12px 16px;
+  background: #fff;
+  border: 2px solid #AD606E40;
+  border-radius: 12px;
+  color: #333;
+  font-size: 14px;
+  outline: none;
+  width: 240px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-login-input:focus {
+  border-color: #AD606E;
+}
+
+.admin-login-input::placeholder {
+  color: #ccc;
+}
+
+.admin-login-btn {
+  padding: 12px 24px;
+  background: #AD606E;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+}
+
+.admin-login-btn:hover {
+  background: #c47080;
+}
+
+.admin-login-error {
+  color: #AD606E;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.admin-tab {
+  padding: 4px 12px;
+  background: #f0e8ea;
+  color: #AD606E;
+  border: 1px solid #AD606E40;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  transition: all 0.15s;
+}
+
+.admin-tab.active {
+  background: #AD606E;
+  color: #fff;
+  border-color: #AD606E;
+}
+
+.admin-error {
+  color: #AD606E;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.admin-empty {
+  color: #bbb;
+  font-size: 14px;
+  padding: 20px;
+  text-align: center;
+  font-style: italic;
+}

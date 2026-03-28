@@ -1,0 +1,312 @@
+/* ── Earbud Reveal ── */
+
+.earbud-container {
+  position: fixed;
+  bottom: -190px;
+  right: -60px;
+  z-index: 90;
+  cursor: pointer;
+  width: 280px;
+  transition: transform 0.3s ease, bottom 1.8s cubic-bezier(0.22, 1, 0.36, 1), right 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .earbud-container {
+    width: 450px;
+    bottom: -230px;
+    right: -80px;
+  }
+}
+
+.earbud-container:hover {
+  transform: translateY(-4px);
+}
+
+/* Pull out - the whole unit slides up revealing the iPod at the end */
+.earbud-container.revealing {
+  bottom: -40px;
+  right: -20px;
+}
+
+/* Image wrapper */
+.earbud-image-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+.earbud-image {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(3px 6px 12px rgba(0, 0, 0, 0.3)) drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.15));
+  mix-blend-mode: multiply;
+  object-fit: contain;
+}
+
+.earbud-image {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(3px 6px 12px rgba(0, 0, 0, 0.3)) drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.15));
+  mix-blend-mode: multiply;
+  object-fit: contain;
+}
+
+/* ── Music notes ── */
+.music-notes {
+  position: absolute;
+  top: 20px;
+  left: 40px;
+  pointer-events: none;
+}
+
+.music-note {
+  position: absolute;
+  color: #AD606E;
+  opacity: 0;
+  font-size: 16px;
+}
+
+@keyframes floatNote1 {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  15% { opacity: 0.6; }
+  100% { opacity: 0; transform: translate(-15px, -35px) rotate(-20deg); }
+}
+
+@keyframes floatNote2 {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  20% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate(10px, -30px) rotate(15deg); }
+}
+
+@keyframes floatNote3 {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  10% { opacity: 0.4; }
+  100% { opacity: 0; transform: translate(-8px, -28px) rotate(-10deg); }
+}
+
+.note-1 {
+  left: 0;
+  top: 0;
+  animation: floatNote1 2.5s ease-out infinite;
+}
+
+.note-2 {
+  left: 30px;
+  top: -8px;
+  font-size: 13px;
+  animation: floatNote2 2.8s ease-out infinite;
+  animation-delay: 0.9s;
+}
+
+.note-3 {
+  left: 60px;
+  top: 5px;
+  font-size: 18px;
+  animation: floatNote3 3s ease-out infinite;
+  animation-delay: 1.6s;
+}
+
+/* ── iPod attached to wire ── */
+.ipod-attached {
+  position: relative;
+  margin-top: -40px;
+  margin-left: auto;
+  margin-right: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+}
+
+.ipod-attached-body {
+  width: 100px;
+  height: 172px;
+  background: linear-gradient(
+    170deg,
+    #d4d4d4 0%,
+    #c8c8c8 5%,
+    #bfbfbf 15%,
+    #b8b8b8 30%,
+    #c0c0c0 50%,
+    #b5b5b5 70%,
+    #a8a8a8 90%,
+    #9e9e9e 100%
+  );
+  border-radius: 8px;
+  padding: 6px 6px 5px;
+  box-shadow:
+    0 3px 14px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    inset 3px 0 8px rgba(0, 0, 0, 0.08),
+    inset -3px 0 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+/* Brushed metal texture */
+.ipod-attached-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 1px,
+    rgba(255, 255, 255, 0.02) 1px,
+    rgba(255, 255, 255, 0.02) 2px
+  );
+  pointer-events: none;
+}
+
+/* Edge vignette */
+.ipod-attached-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  box-shadow:
+    inset 3px 0 8px rgba(0, 0, 0, 0.1),
+    inset -3px 0 8px rgba(0, 0, 0, 0.1),
+    inset 0 3px 6px rgba(0, 0, 0, 0.06),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+}
+
+.ipod-attached-bezel {
+  width: 100%;
+  height: 68px;
+  background: linear-gradient(180deg, #1a1a1a, #0a0a0a);
+  border-radius: 3px;
+  padding: 2px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.ipod-attached-screen {
+  width: 100%;
+  height: 100%;
+  background: #f0f0ee;
+  border-radius: 1.5px;
+  overflow: hidden;
+}
+
+.ipod-attached-titlebar {
+  background: linear-gradient(180deg, #6fa3e7 0%, #3a7bd5 40%, #2e6bc4 100%);
+  color: #fff;
+  font-size: 6px;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  padding: 2px 4px;
+  letter-spacing: 0.2px;
+}
+
+.ipod-attached-content {
+  background: #f0f0ee;
+  flex: 1;
+}
+
+.ipod-attached-wheel {
+  width: 62px;
+  height: 62px;
+  margin-top: 8px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #f2f2f2, #e6e6e6, #ddd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 4px rgba(0, 0, 0, 0.1),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.ipod-attached-wheel-center {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ccc, #b8b8b8);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* ── iPod Modal ── */
+.ipod-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(250, 250, 250, 0.5);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 95;
+}
+
+.ipod-modal-container {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 96;
+  pointer-events: none;
+}
+
+.ipod-modal-container .ipod-page {
+  min-height: auto !important;
+  background: transparent !important;
+  pointer-events: auto;
+}
+
+/* ── Toggle ── */
+.ipod-toggle-bar {
+  position: fixed;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 97;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.toggle-track {
+  width: 40px;
+  height: 22px;
+  background: #222;
+  border-radius: 11px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transition: background 0.3s;
+}
+
+.toggle-knob {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-track.off .toggle-knob {
+  right: 20px;
+}
+
+.toggle-track.off {
+  background: #555;
+}
+
+.ipod-toggle-bar:hover .toggle-knob {
+  background: #eee;
+}

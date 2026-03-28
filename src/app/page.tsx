@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, TwitterIcon, Bookmark01Icon, YelpIcon, Linkedin01Icon } from "@hugeicons/core-free-icons";
+import EarbudReveal from "@/components/EarbudReveal";
 
 export default function Home() {
   const [showPast, setShowPast] = useState(false);
@@ -101,6 +102,9 @@ export default function Home() {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't capture keys when typing in an input
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
       if (e.key === 'Shift') {
         shiftHeld = true;
         setIsRunning(true);
@@ -550,6 +554,7 @@ export default function Home() {
         </p>
       </div>
     </main>
+    <EarbudReveal />
     </>
   );
 }
