@@ -95,7 +95,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
-    return Response.json({ error: 'Spotify credentials not configured' }, { status: 500 });
+    return Response.json({ error: 'Spotify is not configured' }, { status: 500 });
   }
 
   try {

@@ -1,7 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect, useRef, FormEvent, KeyboardEvent, ChangeEvent } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense, useState, useRef, FormEvent, KeyboardEvent, ChangeEvent } from 'react';
 import '../ipod/ipod.css';
 
 interface Song {
@@ -41,8 +40,7 @@ export default function AdminPage() {
 }
 
 function AdminContent() {
-  const searchParams = useSearchParams();
-  const [password, setPassword] = useState<string>(searchParams.get('key') || '');
+  const [password, setPassword] = useState<string>('');
   const [authed, setAuthed] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>('');
   const adminKeyRef = useRef<string>('');
@@ -70,11 +68,13 @@ function AdminContent() {
   const [newPlaylistName, setNewPlaylistName] = useState<string>('');
   const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
 
-  useEffect(() => { if (searchParams.get('key')) tryAuth(searchParams.get('key')!); }, []);
-
   const tryAuth = async (key: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/admin/verify?key=${encodeURIComponent(key)}`);
+      const res = await fetch('/api/admin/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      });
       const data: { ok: boolean } = await res.json();
       if (data.ok) { adminKeyRef.current = key; setAuthed(true); setAuthError(''); fetchAll(); }
       else setAuthError('Wrong password');
