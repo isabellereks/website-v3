@@ -5,6 +5,7 @@ import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Mail01Icon, TwitterIcon, Bookmark01Icon, YelpIcon, Linkedin01Icon } from "@hugeicons/core-free-icons";
 import EarbudReveal from "@/components/EarbudReveal";
+import { prepareWithSegments, layoutNextLine, type LayoutCursor } from "@chenglou/pretext";
 
 export default function Home() {
   const [showPast, setShowPast] = useState(false);
@@ -20,6 +21,8 @@ export default function Home() {
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const initialMiffyRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
+  const miffyPosRef = useRef(miffyPos);
+  miffyPosRef.current = miffyPos;
 
   useEffect(() => {
     if (!isDragging && !isMoving) return;
@@ -31,8 +34,8 @@ export default function Home() {
   }, [isDragging, isMoving, isRunning]);
 
   useEffect(() => {
-    const STEP = 5;
-    const RUN_STEP = 12;
+    const STEP = 3;
+    const RUN_STEP = 7;
     const MIFFY_SIZE = 70;
     const keysHeld = new Set<string>();
     let animationId: number;
@@ -225,23 +228,273 @@ export default function Home() {
     };
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
+  // ── Word ripple with persistent expanding ripples + wake trail ──
+  const wordCacheRef = useRef<{ el: HTMLElement; x: number; y: number; isStardust: boolean; active: boolean; origColor: string; lastHitTime: number }[]>([]);
+  const cacheReady = useRef(false);
+  const ripplesRef = useRef<{ x: number; y: number; born: number; amp: number }[]>([]);
+  const prevMiffyRef = useRef({ x: 0, y: 0 });
+  const spawnAccum = useRef(0);
+
+  // Split text into word-level inline-block spans (fix strikethrough)
   useEffect(() => {
     if (!mainContentRef.current) return;
-    
     const container = mainContentRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const MIFFY_SIZE = 70;
-    const miffyCenterX = miffyPos.x + MIFFY_SIZE / 2 - containerRect.left;
-    const miffyCenterY = miffyPos.y + MIFFY_SIZE / 2 - containerRect.top;
-    
-    if (miffyActivated) {
-      container.style.maskImage = `radial-gradient(circle 55px at ${miffyCenterX}px ${miffyCenterY}px, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 60%, black 100%)`;
-      container.style.webkitMaskImage = `radial-gradient(circle 55px at ${miffyCenterX}px ${miffyCenterY}px, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 60%, black 100%)`;
-    } else {
-      container.style.maskImage = 'none';
-      container.style.webkitMaskImage = 'none';
+
+    function isInsideStrike(node: Node): boolean {
+      let el = node.parentElement;
+      while (el && el !== container) {
+        const tag = el.tagName;
+        if (tag === 'S' || tag === 'DEL' || tag === 'STRIKE') return true;
+        el = el.parentElement;
+      }
+      return false;
     }
-  }, [miffyPos, miffyActivated]);
+
+    function splitWords(root: Node) {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+      const nodes: Text[] = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+
+      for (const node of nodes) {
+        const text = node.textContent || '';
+        if (!text.trim()) continue;
+        if (node.parentElement?.classList.contains('w-word')) continue;
+        const strike = isInsideStrike(node);
+        const frag = document.createDocumentFragment();
+        const parts = text.split(/( +)/);
+        for (const part of parts) {
+          if (!part) continue;
+          if (/^ +$/.test(part)) {
+            frag.appendChild(document.createTextNode(part));
+            continue;
+          }
+          const span = document.createElement('span');
+          span.className = 'w-word';
+          span.style.display = 'inline-block';
+          if (strike) span.style.textDecoration = 'line-through';
+          span.textContent = part;
+          frag.appendChild(span);
+        }
+        node.parentNode?.replaceChild(frag, node);
+      }
+    }
+
+    splitWords(container);
+
+    const obs = new MutationObserver((muts) => {
+      for (const m of muts) m.addedNodes.forEach((n) => {
+        if (n.nodeType === Node.ELEMENT_NODE) { splitWords(n); cacheReady.current = false; }
+      });
+    });
+    obs.observe(container, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
+
+  // Animate with persistent ripples
+  useEffect(() => {
+    if (!miffyActivated || !mainContentRef.current) return;
+    const container = mainContentRef.current;
+    let rafId: number;
+
+    // ── Tuning ──
+    const MIFFY_HALF = 35;
+    const RIPPLE_LIFETIME = 2500;   // ms — longer life so ripples fan out further
+    const RIPPLE_SPEED = 120;       // px/sec — slower expansion, more visible crests
+    const WAVELENGTH = 55;          // px between wave crests — wider for gentler look
+    const MAX_AMP = 18;             // max displacement at birth (aggressive near Miffy)
+    const INFLUENCE = 500;          // very wide reach so ripple fans out far
+    const SPAWN_INTERVAL = 20;      // px of movement between wake ripple spawns
+    const BASE_RGB = [30, 30, 30];
+    const RIPPLE_RGB = [173, 96, 110];
+    const STARDUST_RGB = [160, 50, 80];
+    const STARDUST_RADIUS = 100;
+
+    // Warm pretext cache
+    try {
+      const text = container.textContent || '';
+      const p = prepareWithSegments(text, '14px serif');
+      layoutNextLine(p, { segmentIndex: 0, graphemeIndex: 0 }, container.getBoundingClientRect().width);
+    } catch { /* non-critical */ }
+
+    function buildCache() {
+      const els = container.querySelectorAll('.w-word');
+      const cache: typeof wordCacheRef.current = [];
+      els.forEach((el) => {
+        const h = el as HTMLElement;
+        h.style.transform = '';
+        h.style.color = '';
+        h.style.textShadow = '';
+        // Capture the original computed color AFTER clearing inline override
+        const computed = window.getComputedStyle(h).color;
+        const r = h.getBoundingClientRect();
+        const parentText = h.parentElement?.textContent || '';
+        cache.push({
+          el: h,
+          x: r.left + r.width / 2,
+          y: r.top + r.height / 2,
+          isStardust: parentText.includes('stardust'),
+          active: false,
+          origColor: computed,
+          lastHitTime: 0,
+        });
+      });
+      wordCacheRef.current = cache;
+      cacheReady.current = true;
+    }
+
+    buildCache();
+
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleRebuild = () => { clearTimeout(timer); timer = setTimeout(buildCache, 250); };
+    window.addEventListener('scroll', scheduleRebuild, { passive: true });
+    window.addEventListener('resize', scheduleRebuild);
+
+    function animate() {
+      if (!cacheReady.current) { rafId = requestAnimationFrame(animate); return; }
+      const now = performance.now();
+      const pos = miffyPosRef.current;
+      const mx = pos.x + MIFFY_HALF;
+      const my = pos.y + MIFFY_HALF;
+
+      // ── Spawn wake ripples along Miffy's path ──
+      const pdx = mx - prevMiffyRef.current.x;
+      const pdy = my - prevMiffyRef.current.y;
+      const moveDist = Math.sqrt(pdx * pdx + pdy * pdy);
+      spawnAccum.current += moveDist;
+
+      if (spawnAccum.current > SPAWN_INTERVAL) {
+        // Spawn ripple(s) along the path — stronger when moving faster
+        const speed = moveDist; // pixels this frame
+        const amp = Math.min(MAX_AMP, MAX_AMP * 0.4 + speed * 0.15);
+        ripplesRef.current.push({ x: mx, y: my, born: now, amp });
+        spawnAccum.current = 0;
+      }
+      prevMiffyRef.current = { x: mx, y: my };
+
+      // ── Prune old ripples ──
+      ripplesRef.current = ripplesRef.current.filter((r) => now - r.born < RIPPLE_LIFETIME);
+
+      const ripples = ripplesRef.current;
+      const cache = wordCacheRef.current;
+
+      for (let i = 0; i < cache.length; i++) {
+        const w = cache[i];
+
+        // ── Stardust shimmer ──
+        const sdx = w.x - mx;
+        const sdy = w.y - my;
+        const sdistSq = sdx * sdx + sdy * sdy;
+        if (w.isStardust && sdistSq < STARDUST_RADIUS * STARDUST_RADIUS) {
+          const dist = Math.sqrt(sdistSq);
+          const t = 1 - dist / STARDUST_RADIUS;
+          const shimmer = Math.sin(now * 0.008 + i * 1.5) * 0.3 + 0.7;
+          const blend = t * t;
+          const cr = Math.round(STARDUST_RGB[0] + (255 - STARDUST_RGB[0]) * shimmer * blend * 0.3);
+          const cg = Math.round(STARDUST_RGB[1]);
+          const cb = Math.round(STARDUST_RGB[2] + (180 - STARDUST_RGB[2]) * shimmer * blend * 0.2);
+          const push = t * t * 6;
+          const angle = Math.atan2(sdy, sdx);
+          w.el.style.transform = `translate(${(Math.cos(angle) * push).toFixed(1)}px,${(Math.sin(angle) * push).toFixed(1)}px)`;
+          w.el.style.color = `rgb(${cr},${cg},${cb})`;
+          w.el.style.textShadow = `0 0 ${(8 * blend).toFixed(0)}px rgba(173,96,110,${(blend * 0.6).toFixed(2)})`;
+          w.active = true;
+          continue;
+        }
+
+        // ── Sum displacement from all active ripples ──
+        let totalTx = 0;
+        let totalTy = 0;
+        let maxBlend = 0;
+        let hit = false;
+
+        for (let j = 0; j < ripples.length; j++) {
+          const rip = ripples[j];
+          const rdx = w.x - rip.x;
+          const rdy = w.y - rip.y;
+          const dist = Math.sqrt(rdx * rdx + rdy * rdy);
+
+          if (dist > INFLUENCE) continue;
+
+          const age = (now - rip.born) / 1000; // seconds
+          const radius = age * RIPPLE_SPEED;    // expanding ring position
+          const decay = Math.max(0, 1 - (now - rip.born) / RIPPLE_LIFETIME); // amplitude decay
+
+          // Distance from this word to the expanding ring
+          const ringDist = dist - radius;
+          // Falloff: strong near origin, very gradual tail
+          // Using (1 - x)^1.3 instead of (1 - x)^2 — holds strength longer
+          const normDist = Math.min(dist / INFLUENCE, 1);
+          const falloff = Math.pow(1 - normDist, 1.3);
+
+          // Near-field boost: words very close to origin get extra push
+          const nearBoost = dist < 80 ? (1 - dist / 80) * 1.5 + 1 : 1;
+
+          // Sine wave centered on the expanding ring — multiple crests
+          const wave = Math.sin(ringDist / WAVELENGTH * Math.PI * 2);
+          const strength = wave * rip.amp * decay * falloff * nearBoost;
+
+          // Radial push outward from ripple origin
+          const angle = dist > 0 ? Math.atan2(rdy, rdx) : 0;
+          totalTx += Math.cos(angle) * strength;
+          totalTy += Math.sin(angle) * strength * 0.4;
+
+          const blend = decay * falloff;
+          if (blend > maxBlend) maxBlend = blend;
+          hit = true;
+        }
+
+        if (hit) {
+          w.lastHitTime = now;
+          const colorBlend = Math.min(maxBlend * 0.5, 0.6);
+          // Parse original color to blend toward it
+          const orig = w.origColor.match(/\d+/g)?.map(Number) || BASE_RGB;
+          const cr = Math.round(orig[0] + (RIPPLE_RGB[0] - orig[0]) * colorBlend);
+          const cg = Math.round(orig[1] + (RIPPLE_RGB[1] - orig[1]) * colorBlend);
+          const cb = Math.round(orig[2] + (RIPPLE_RGB[2] - orig[2]) * colorBlend);
+          w.el.style.transform = `translate(${totalTx.toFixed(1)}px,${totalTy.toFixed(1)}px)`;
+          w.el.style.color = `rgb(${cr},${cg},${cb})`;
+          w.el.style.textShadow = '';
+          w.active = true;
+        } else if (w.active) {
+          // ── Ripple-back: color fades back gradually ──
+          const RECOVER_MS = 600; // time to fade back to original color
+          const elapsed = now - w.lastHitTime;
+          if (elapsed < RECOVER_MS) {
+            // Blend from ripple color back to original
+            const t = elapsed / RECOVER_MS;
+            const ease = t * t * (3 - 2 * t); // smoothstep
+            const orig = w.origColor.match(/\d+/g)?.map(Number) || BASE_RGB;
+            const cr = Math.round(RIPPLE_RGB[0] + (orig[0] - RIPPLE_RGB[0]) * ease);
+            const cg = Math.round(RIPPLE_RGB[1] + (orig[1] - RIPPLE_RGB[1]) * ease);
+            const cb = Math.round(RIPPLE_RGB[2] + (orig[2] - RIPPLE_RGB[2]) * ease);
+            w.el.style.transform = '';
+            w.el.style.color = `rgb(${cr},${cg},${cb})`;
+          } else {
+            w.el.style.transform = '';
+            w.el.style.color = '';
+            w.el.style.textShadow = '';
+            w.active = false;
+          }
+        }
+      }
+
+      rafId = requestAnimationFrame(animate);
+    }
+
+    rafId = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(rafId);
+      clearTimeout(timer);
+      window.removeEventListener('scroll', scheduleRebuild);
+      window.removeEventListener('resize', scheduleRebuild);
+      ripplesRef.current = [];
+      wordCacheRef.current.forEach((w) => {
+        w.el.style.transform = '';
+        w.el.style.color = '';
+        w.el.style.textShadow = '';
+      });
+    };
+  }, [miffyActivated]);
 
   return (
     <>
