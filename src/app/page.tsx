@@ -305,9 +305,7 @@ export default function Home() {
     const INFLUENCE = 500;          // very wide reach so ripple fans out far
     const SPAWN_INTERVAL = 20;      // px of movement between wake ripple spawns
     const BASE_RGB = [30, 30, 30];
-    const RIPPLE_RGB = [173, 96, 110];
-    const STARDUST_RGB = [160, 50, 80];
-    const STARDUST_RADIUS = 100;
+    const RIPPLE_RGB = [180, 180, 180]; // strong grey flash — high contrast
 
     // Warm pretext cache
     try {
@@ -380,27 +378,6 @@ export default function Home() {
       for (let i = 0; i < cache.length; i++) {
         const w = cache[i];
 
-        // ── Stardust shimmer ──
-        const sdx = w.x - mx;
-        const sdy = w.y - my;
-        const sdistSq = sdx * sdx + sdy * sdy;
-        if (w.isStardust && sdistSq < STARDUST_RADIUS * STARDUST_RADIUS) {
-          const dist = Math.sqrt(sdistSq);
-          const t = 1 - dist / STARDUST_RADIUS;
-          const shimmer = Math.sin(now * 0.008 + i * 1.5) * 0.3 + 0.7;
-          const blend = t * t;
-          const cr = Math.round(STARDUST_RGB[0] + (255 - STARDUST_RGB[0]) * shimmer * blend * 0.3);
-          const cg = Math.round(STARDUST_RGB[1]);
-          const cb = Math.round(STARDUST_RGB[2] + (180 - STARDUST_RGB[2]) * shimmer * blend * 0.2);
-          const push = t * t * 6;
-          const angle = Math.atan2(sdy, sdx);
-          w.el.style.transform = `translate(${(Math.cos(angle) * push).toFixed(1)}px,${(Math.sin(angle) * push).toFixed(1)}px)`;
-          w.el.style.color = `rgb(${cr},${cg},${cb})`;
-          w.el.style.textShadow = `0 0 ${(8 * blend).toFixed(0)}px rgba(173,96,110,${(blend * 0.6).toFixed(2)})`;
-          w.active = true;
-          continue;
-        }
-
         // ── Sum displacement from all active ripples ──
         let totalTx = 0;
         let totalTy = 0;
@@ -445,36 +422,18 @@ export default function Home() {
 
         if (hit) {
           w.lastHitTime = now;
-          const colorBlend = Math.min(maxBlend * 0.5, 0.6);
-          // Parse original color to blend toward it
-          const orig = w.origColor.match(/\d+/g)?.map(Number) || BASE_RGB;
-          const cr = Math.round(orig[0] + (RIPPLE_RGB[0] - orig[0]) * colorBlend);
-          const cg = Math.round(orig[1] + (RIPPLE_RGB[1] - orig[1]) * colorBlend);
-          const cb = Math.round(orig[2] + (RIPPLE_RGB[2] - orig[2]) * colorBlend);
+          const blend = Math.min(maxBlend * 0.8, 0.9);
+          // Blend between black and light grey based on wave strength
+          const grey = Math.round(BASE_RGB[0] + (RIPPLE_RGB[0] - BASE_RGB[0]) * blend);
           w.el.style.transform = `translate(${totalTx.toFixed(1)}px,${totalTy.toFixed(1)}px)`;
-          w.el.style.color = `rgb(${cr},${cg},${cb})`;
+          w.el.style.color = `rgb(${grey},${grey},${grey})`;
           w.el.style.textShadow = '';
           w.active = true;
         } else if (w.active) {
-          // ── Ripple-back: color fades back gradually ──
-          const RECOVER_MS = 600; // time to fade back to original color
-          const elapsed = now - w.lastHitTime;
-          if (elapsed < RECOVER_MS) {
-            // Blend from ripple color back to original
-            const t = elapsed / RECOVER_MS;
-            const ease = t * t * (3 - 2 * t); // smoothstep
-            const orig = w.origColor.match(/\d+/g)?.map(Number) || BASE_RGB;
-            const cr = Math.round(RIPPLE_RGB[0] + (orig[0] - RIPPLE_RGB[0]) * ease);
-            const cg = Math.round(RIPPLE_RGB[1] + (orig[1] - RIPPLE_RGB[1]) * ease);
-            const cb = Math.round(RIPPLE_RGB[2] + (orig[2] - RIPPLE_RGB[2]) * ease);
-            w.el.style.transform = '';
-            w.el.style.color = `rgb(${cr},${cg},${cb})`;
-          } else {
-            w.el.style.transform = '';
-            w.el.style.color = '';
-            w.el.style.textShadow = '';
-            w.active = false;
-          }
+          w.el.style.transform = '';
+          w.el.style.color = '';
+          w.el.style.textShadow = '';
+          w.active = false;
         }
       }
 
