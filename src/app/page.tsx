@@ -298,12 +298,12 @@ export default function Home() {
 
     // ── Tuning ──
     const MIFFY_HALF = 35;
-    const RIPPLE_LIFETIME = 2500;   // ms — longer life so ripples fan out further
-    const RIPPLE_SPEED = 120;       // px/sec — slower expansion, more visible crests
-    const WAVELENGTH = 55;          // px between wave crests — wider for gentler look
-    const MAX_AMP = 18;             // max displacement at birth (aggressive near Miffy)
-    const INFLUENCE = 500;          // very wide reach so ripple fans out far
-    const SPAWN_INTERVAL = 20;      // px of movement between wake ripple spawns
+    const RIPPLE_LIFETIME = 2000;   // ms
+    const RIPPLE_SPEED = 80;        // px/sec — gentle expansion
+    const WAVELENGTH = 70;          // wide spacing between crests
+    const MAX_AMP = 6;              // subtle displacement
+    const INFLUENCE = 350;          // moderate reach
+    const SPAWN_INTERVAL = 45;      // fewer ripples spawned
     const BASE_RGB = [30, 30, 30];
     const RIPPLE_RGB = [180, 180, 180]; // strong grey flash — high contrast
 
@@ -362,8 +362,7 @@ export default function Home() {
 
       if (spawnAccum.current > SPAWN_INTERVAL) {
         // Spawn ripple(s) along the path — stronger when moving faster
-        const speed = moveDist; // pixels this frame
-        const amp = Math.min(MAX_AMP, MAX_AMP * 0.4 + speed * 0.15);
+        const amp = MAX_AMP;
         ripplesRef.current.push({ x: mx, y: my, born: now, amp });
         spawnAccum.current = 0;
       }
@@ -398,17 +397,13 @@ export default function Home() {
 
           // Distance from this word to the expanding ring
           const ringDist = dist - radius;
-          // Falloff: strong near origin, very gradual tail
-          // Using (1 - x)^1.3 instead of (1 - x)^2 — holds strength longer
+          // Smooth falloff — gentle everywhere
           const normDist = Math.min(dist / INFLUENCE, 1);
-          const falloff = Math.pow(1 - normDist, 1.3);
+          const falloff = (1 - normDist) * (1 - normDist);
 
-          // Near-field boost: words very close to origin get extra push
-          const nearBoost = dist < 80 ? (1 - dist / 80) * 1.5 + 1 : 1;
-
-          // Sine wave centered on the expanding ring — multiple crests
+          // Sine wave centered on the expanding ring
           const wave = Math.sin(ringDist / WAVELENGTH * Math.PI * 2);
-          const strength = wave * rip.amp * decay * falloff * nearBoost;
+          const strength = wave * rip.amp * decay * falloff;
 
           // Radial push outward from ripple origin
           const angle = dist > 0 ? Math.atan2(rdy, rdx) : 0;
@@ -422,7 +417,7 @@ export default function Home() {
 
         if (hit) {
           w.lastHitTime = now;
-          const blend = Math.min(maxBlend * 0.8, 0.9);
+          const blend = Math.min(maxBlend * 0.4, 0.5);
           // Blend between black and light grey based on wave strength
           const grey = Math.round(BASE_RGB[0] + (RIPPLE_RGB[0] - BASE_RGB[0]) * blend);
           w.el.style.transform = `translate(${totalTx.toFixed(1)}px,${totalTy.toFixed(1)}px)`;

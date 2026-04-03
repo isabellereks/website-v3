@@ -46,16 +46,19 @@ export default function EarbudReveal() {
   if (!windowSize.w) return null;
 
   const isMobile = windowSize.w < 768;
-  const scale = isMobile ? 0.75 : 1;
-  const ipodW = 320 * scale;
-  const ipodH = 580 * scale;
 
-  const earbudsAbove = isMobile ? 170 : 220;
-  const centerX = (windowSize.w - ipodW) / 2;
-  const centerY = (windowSize.h - ipodH) / 2 - earbudsAbove;
 
-  const idleX = windowSize.w - (isMobile ? 340 : 420);
-  const idleY = windowSize.h - 220;
+  const scale = isMobile ? 0.7 : 1;
+  const ipodW = 320;
+  const ipodH = 580;
+  const earbudsAbove = isMobile ? 150 : 220;
+
+  // Simple pixel positions — no scale division
+  const centerX = (windowSize.w - ipodW * scale) / 2;
+  const centerY = (windowSize.h - ipodH * scale) / 2 - earbudsAbove * scale;
+
+  const idleX = windowSize.w - (isMobile ? 250 : 400);
+  const idleY = windowSize.h - 150;
 
   const isDrawnUp = phase === 'drawing' || phase === 'unplugging' || phase === 'open' || phase === 'plugging';
   const earbudsOff = phase === 'unplugging' || phase === 'open';
@@ -80,6 +83,7 @@ export default function EarbudReveal() {
       <motion.div
         ref={unitRef}
         className="reveal-unit"
+        style={{ overflow: isDrawnUp ? 'visible' : 'hidden', maxHeight: isDrawnUp ? 'none' : '350px' }}
         initial={{ x: idleX, y: idleY, scale: scale * 0.9 }}
         animate={{
           x: isDrawnUp ? centerX : idleX,
