@@ -64,23 +64,25 @@ if (typeof window !== 'undefined') {
   }).catch(() => {});
 }
 
+let sharedAudioCtx: AudioContext | null = null;
 function hapticClick(): void {
   // iOS haptics
   if (iosHaptic) { iosHaptic(); return; }
   // Android vibration
   if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(5);
-  // Audio click fallback (desktop)
+  // Audio click fallback (desktop + mobile)
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!sharedAudioCtx) sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sharedAudioCtx.state === 'suspended') sharedAudioCtx.resume();
+    const osc = sharedAudioCtx.createOscillator();
+    const gain = sharedAudioCtx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(sharedAudioCtx.destination);
     osc.frequency.value = 1200;
     gain.gain.value = 0.03;
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, sharedAudioCtx.currentTime + 0.05);
+    osc.start(sharedAudioCtx.currentTime);
+    osc.stop(sharedAudioCtx.currentTime + 0.05);
   } catch { /* no-op */ }
 }
 
@@ -131,6 +133,7 @@ export default function IPod() {
   const [pendingTrack, setPendingTrack] = useState<SearchResult | null>(null);
   const [submitName, setSubmitName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submitError, setSubmitError] = useState<string>('');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -141,10 +144,20 @@ export default function IPod() {
   useEffect(() => { isFirstRender.current = false; }, []);
   useEffect(() => { setLikedSongsState(getLikedSongs()); }, []);
 
+  // Pause audio when iPod unmounts (e.g. modal closes)
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeAttribute('src');
+      }
+    };
+  }, []);
+
   // Fetch curated songs and playlists from Supabase
   useEffect(() => {
-    fetch('/api/songs').then(r => r.json()).then((d: unknown) => { if (Array.isArray(d)) setCuratedTracks(d); }).catch(() => {});
-    fetch('/api/playlists').then(r => r.json()).then((d: unknown) => { if (Array.isArray(d)) setPlaylists(d); }).catch(() => {});
+    fetch('/api/songs').then(r => r.json()).then((d: unknown) => { if (Array.isArray(d)) setCuratedTracks(d); }).catch((err) => console.error('Failed to fetch songs:', err));
+    fetch('/api/playlists').then(r => r.json()).then((d: unknown) => { if (Array.isArray(d)) setPlaylists(d); }).catch((err) => console.error('Failed to fetch playlists:', err));
   }, []);
 
   const fetchCommunity = useCallback(async () => {
@@ -153,7 +166,7 @@ export default function IPod() {
       const res = await fetch('/api/community-songs');
       const data: unknown = await res.json();
       if (Array.isArray(data)) setCommunitySongs(data);
-    } catch { /* no-op */ }
+    } catch (err) { console.error('Failed to fetch community songs:', err); }
     setCommunityLoading(false);
   }, []);
 
@@ -213,7 +226,7 @@ export default function IPod() {
   }, [navStack.length]);
 
   // ─── Playback ───
-  const doPlayTrack = useCallback((idx: number, trackList: Song[]): void => {
+  const doPlayTrack = useCallback(async (idx: number, trackList: Song[]): Promise<void> => {
     const track = trackList[idx];
     if (!track) return;
     setCurrentTrackIdx(idx);
@@ -222,12 +235,28 @@ export default function IPod() {
     setDuration(0);
     const audio = audioRef.current;
     if (!audio) return;
-    const src = track.src || track.preview_url;
+    let src = track.src || track.preview_url;
+
+    // If no preview URL, try to fetch a fresh one from Deezer via the search API
+    if (!src && track.title && track.artist) {
+      try {
+        const res = await fetch(`/api/spotify-search?query=${encodeURIComponent(`${track.title} ${track.artist}`)}`);
+        const results = await res.json();
+        if (Array.isArray(results) && results[0]?.preview_url) {
+          src = results[0].preview_url;
+          track.preview_url = src;
+        }
+      } catch (err) {
+        console.error('Failed to fetch preview URL:', err);
+      }
+    }
+
     if (src) {
       audio.src = src;
-      audio.play().catch(() => {});
+      audio.play().catch((err) => console.error('Playback failed:', err));
       setIsPlaying(true);
     } else {
+      console.warn(`No preview available for "${track.title}" by ${track.artist}`);
       audio.pause();
       audio.removeAttribute('src');
       setIsPlaying(false);
@@ -270,21 +299,33 @@ export default function IPod() {
 
   // ─── Hearts ───
   const toggleHeart = useCallback(async (songId: string): Promise<void> => {
-    const liked = getLikedSongs();
-    const isLiked = liked.includes(songId);
-    const newLiked = isLiked ? liked.filter((id) => id !== songId) : [...liked, songId];
+    const prevLiked = getLikedSongs();
+    const isLiked = prevLiked.includes(songId);
+    const newLiked = isLiked ? prevLiked.filter((id) => id !== songId) : [...prevLiked, songId];
+
+    // Optimistic update
     saveLikedSongs(newLiked);
     setLikedSongsState(newLiked);
     setCommunitySongs((prev) =>
       prev.map((s) => s.id === songId ? { ...s, hearts: Math.max(0, (s.hearts || 0) + (isLiked ? -1 : 1)) } : s)
     );
+
     try {
-      await fetch(`/api/community-songs/${songId}/heart`, {
+      const res = await fetch(`/api/community-songs/${songId}/heart`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: isLiked ? 'unlike' : 'like' }),
       });
-    } catch { /* no-op */ }
+      if (!res.ok) throw new Error('Heart request failed');
+    } catch (err) {
+      console.error('Failed to toggle heart:', err);
+      // Rollback
+      saveLikedSongs(prevLiked);
+      setLikedSongsState(prevLiked);
+      setCommunitySongs((prev) =>
+        prev.map((s) => s.id === songId ? { ...s, hearts: Math.max(0, (s.hearts || 0) + (isLiked ? 1 : -1)) } : s)
+      );
+    }
   }, []);
 
   // ─── Spotify search ───
@@ -325,8 +366,9 @@ export default function IPod() {
   const submitSong = useCallback(async (): Promise<void> => {
     if (!pendingTrack) return;
     setIsSubmitting(true);
+    setSubmitError('');
     try {
-      await fetch('/api/community-songs', {
+      const res = await fetch('/api/community-songs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -339,17 +381,32 @@ export default function IPod() {
           submitted_by: submitName.trim() || 'anonymous',
         }),
       });
-      // Clean up and go back to community
+      if (!res.ok) throw new Error('Failed to submit song');
+      const newSong: Song = await res.json();
+      // Clean up
       setPendingTrack(null);
       setSubmitName('');
       setSearchQuery('');
       setSearchResults([]);
-      fetchCommunity();
+      // Refresh community list and auto-play the new song
+      const communityRes = await fetch('/api/community-songs');
+      const communityData: unknown = await communityRes.json();
+      if (Array.isArray(communityData)) {
+        setCommunitySongs(communityData);
+        const idx = communityData.findIndex((s: Song) => s.id === newSong.id);
+        if (idx !== -1) {
+          doPlayTrack(idx, communityData);
+          return;
+        }
+      }
       setSlideDir(-1);
       setNavStack((prev) => prev.filter((s) => s !== 'search' && s !== 'searchResults' && s !== 'confirmAdd'));
-    } catch { /* no-op */ }
+    } catch (err) {
+      console.error('Failed to submit song:', err);
+      setSubmitError('Failed to submit song. Try again.');
+    }
     setIsSubmitting(false);
-  }, [pendingTrack, submitName, fetchCommunity]);
+  }, [pendingTrack, submitName, fetchCommunity, doPlayTrack]);
 
   // ─── Screen data ───
   const getMenuItems = (screen: string): MenuItem[] => {
@@ -552,6 +609,7 @@ export default function IPod() {
               autoFocus
             />
           </div>
+          {submitError && <div className="confirm-add-error" style={{ color: '#ff4444', fontSize: '11px', textAlign: 'center', marginTop: '4px' }}>{submitError}</div>}
         </div>
       );
     }

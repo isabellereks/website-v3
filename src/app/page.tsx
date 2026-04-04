@@ -229,7 +229,7 @@ export default function Home() {
   }, [handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd]);
 
   // ── Word ripple with persistent expanding ripples + wake trail ──
-  const wordCacheRef = useRef<{ el: HTMLElement; x: number; y: number; isStardust: boolean; active: boolean; origColor: string; lastHitTime: number }[]>([]);
+  const wordCacheRef = useRef<{ el: HTMLElement; x: number; y: number; isStardust: boolean; active: boolean; origColor: string; origRGB: number[]; lastHitTime: number; skipColor: boolean; isStrike: boolean }[]>([]);
   const cacheReady = useRef(false);
   const ripplesRef = useRef<{ x: number; y: number; born: number; amp: number }[]>([]);
   const prevMiffyRef = useRef({ x: 0, y: 0 });
@@ -322,10 +322,18 @@ export default function Home() {
         h.style.transform = '';
         h.style.color = '';
         h.style.textShadow = '';
-        // Capture the original computed color AFTER clearing inline override
         const computed = window.getComputedStyle(h).color;
         const r = h.getBoundingClientRect();
         const parentText = h.parentElement?.textContent || '';
+        const rgb = computed.match(/\d+/g)?.map(Number) || [30, 30, 30];
+        const isDefaultColor = Math.abs(rgb[0] - rgb[1]) < 15 && Math.abs(rgb[1] - rgb[2]) < 15 && rgb[0] < 80;
+        // Check if word is inside a strikethrough element
+        let isStrike = false;
+        let check = h.parentElement;
+        while (check && check !== container) {
+          if (check.tagName === 'S' || check.tagName === 'DEL') { isStrike = true; break; }
+          check = check.parentElement;
+        }
         cache.push({
           el: h,
           x: r.left + r.width / 2,
@@ -333,7 +341,10 @@ export default function Home() {
           isStardust: parentText.includes('stardust'),
           active: false,
           origColor: computed,
+          origRGB: rgb,
           lastHitTime: 0,
+          skipColor: !isDefaultColor && !isStrike,
+          isStrike,
         });
       });
       wordCacheRef.current = cache;
@@ -417,11 +428,18 @@ export default function Home() {
 
         if (hit) {
           w.lastHitTime = now;
-          const blend = Math.min(maxBlend * 0.4, 0.5);
-          // Blend between black and light grey based on wave strength
-          const grey = Math.round(BASE_RGB[0] + (RIPPLE_RGB[0] - BASE_RGB[0]) * blend);
           w.el.style.transform = `translate(${totalTx.toFixed(1)}px,${totalTy.toFixed(1)}px)`;
-          w.el.style.color = `rgb(${grey},${grey},${grey})`;
+          if (!w.skipColor) {
+            const blend = Math.min(maxBlend * 0.8, 0.85);
+            if (w.isStrike) {
+              // Subtle flash for strikethrough: brighten/darken from original
+              const flash = Math.round(w.origRGB[0] + (220 - w.origRGB[0]) * blend * 0.4);
+              w.el.style.color = `rgb(${flash},${flash},${flash})`;
+            } else {
+              const grey = Math.round(BASE_RGB[0] + (RIPPLE_RGB[0] - BASE_RGB[0]) * blend);
+              w.el.style.color = `rgb(${grey},${grey},${grey})`;
+            }
+          }
           w.el.style.textShadow = '';
           w.active = true;
         } else if (w.active) {

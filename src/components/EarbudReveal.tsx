@@ -31,16 +31,18 @@ export default function EarbudReveal() {
       timer = setTimeout(() => setPhase('unplugging'), 900);
     } else if (phase === 'unplugging') {
       timer = setTimeout(() => setPhase('open'), 1000);
-    } else if (phase === 'plugging') {
-      timer = setTimeout(() => setPhase('closing'), 800);
     } else if (phase === 'closing') {
-      timer = setTimeout(() => setPhase('idle'), 500);
+      // Unit slides to corner, then earbuds bounce back
+      timer = setTimeout(() => setPhase('plugging'), 1400);
+    } else if (phase === 'plugging') {
+      // Earbuds bounce in, then settle to idle
+      timer = setTimeout(() => setPhase('idle'), 1200);
     }
     return () => clearTimeout(timer);
   }, [phase]);
 
   const handleClose = useCallback((): void => {
-    setPhase('plugging');
+    setPhase('closing');
   }, []);
 
   if (!windowSize.w) return null;
@@ -57,13 +59,16 @@ export default function EarbudReveal() {
   const centerX = (windowSize.w - ipodW * scale) / 2;
   const centerY = (windowSize.h - ipodH * scale) / 2 - earbudsAbove * scale;
 
-  const idleX = windowSize.w - (isMobile ? 250 : 400);
-  const idleY = windowSize.h - 150;
+  // Idle: earbuds visible in bottom-right corner.
+  // Push Y down enough that the iPod (below earbuds) is off-screen,
+  // but the earbuds (~360px tall) are fully visible.
+  const idleX = windowSize.w - (isMobile ? 100 : 160);
+  const idleY = windowSize.h - 80;
 
-  const isDrawnUp = phase === 'drawing' || phase === 'unplugging' || phase === 'open' || phase === 'plugging';
-  const earbudsOff = phase === 'unplugging' || phase === 'open';
+  const isDrawnUp = phase === 'drawing' || phase === 'unplugging' || phase === 'open';
+  const earbudsOff = phase === 'unplugging' || phase === 'open' || phase === 'closing';
   const isInteractive = phase === 'open';
-  const showBackdrop = phase === 'unplugging' || phase === 'open' || phase === 'plugging';
+  const showBackdrop = phase === 'unplugging' || phase === 'open' || phase === 'closing';
 
   return (
     <>
@@ -83,31 +88,38 @@ export default function EarbudReveal() {
       <motion.div
         ref={unitRef}
         className="reveal-unit"
-        style={{ overflow: isDrawnUp ? 'visible' : 'hidden', maxHeight: isDrawnUp ? 'none' : '350px' }}
-        initial={{ x: idleX, y: idleY, scale: scale * 0.9 }}
+        style={{
+          pointerEvents: isDrawnUp ? 'auto' : 'none',
+          zIndex: isDrawnUp ? 96 : undefined,
+        }}
+        initial={{ x: idleX, y: windowSize.h + 100, scale: scale * 0.9 }}
         animate={{
           x: isDrawnUp ? centerX : idleX,
           y: isDrawnUp ? centerY : idleY,
           scale: isDrawnUp ? scale : scale * 0.9,
         }}
         transition={{
-          duration: phase === 'idle' ? 0 : phase === 'drawing' ? 0.9 : phase === 'closing' ? 0.45 : 0.4,
-          ease: [0.22, 1, 0.36, 1],
+          ...(phase === 'idle'
+            ? { type: 'spring' as const, stiffness: 150, damping: 15, mass: 0.8 }
+            : {
+                duration: phase === 'drawing' ? 0.9 : phase === 'closing' ? 1.4 : 0.4,
+                ease: phase === 'closing' ? [0.4, 0, 0.2, 1] : [0.22, 1, 0.36, 1],
+              }),
         }}
       >
         {/* PNG Earbuds - behind iPod, slides up to unplug */}
         <motion.div
           className="earbuds-part"
           animate={{
-            y: earbudsOff ? -(windowSize.h + 400) : 0,
+            y: earbudsOff ? -500 : 0,
             opacity: earbudsOff ? 0 : 1,
           }}
-          transition={{
-            duration: earbudsOff ? 1.0 : 0.7,
-            ease: [0.22, 1, 0.36, 1],
-          }}
+          transition={earbudsOff
+            ? { duration: 0.8, ease: [0.22, 1, 0.36, 1] }
+            : { type: 'spring', stiffness: 120, damping: 14, mass: 1 }
+          }
           onClick={phase === 'idle' ? handleClick : undefined}
-          style={{ cursor: phase === 'idle' ? 'pointer' : 'default' }}
+          style={{ cursor: phase === 'idle' ? 'pointer' : 'default', pointerEvents: 'auto' }}
         >
           <div className="earbud-image-wrapper">
             <Image
@@ -126,9 +138,9 @@ export default function EarbudReveal() {
           </div>
         </motion.div>
 
-        {/* Real iPod */}
+        {/* Real iPod — mounted when drawn up + during closing slide, unmounts when idle */}
         <div className={`ipod-part ${isInteractive ? 'interactive' : ''}`}>
-          <IPod />
+          {(isDrawnUp || phase === 'closing') && <IPod />}
         </div>
       </motion.div>
     </>
