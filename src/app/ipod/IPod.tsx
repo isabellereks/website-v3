@@ -745,7 +745,7 @@ export default function IPod() {
   const showSearchInput = currentScreen === 'search' || currentScreen === 'searchResults';
 
   return (
-    <div className="ipod-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#111', fontFamily: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
+    <div className="ipod-page" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf6ec', fontFamily: "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif" }}>
       <audio ref={audioRef} preload="auto" />
 
       <div style={{ position: 'relative', width: 320 }}>
